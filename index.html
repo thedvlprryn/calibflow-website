@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CalibFlow — Calibration Management, Automated</title>
+  <meta name="description" content="CalibFlow tracks every instrument, sends alerts before deadlines, books vendors, and generates certificates — so you never fail an audit again.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ── Landing Page Specific Styles ── */
+    body.landing { background: #0B1F3A; }
+
+    /* Landing Nav */
+    .landing-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11,31,58,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      height: 72px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      padding: 0 48px;
+    }
+    .landing-nav .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      margin-right: auto;
+    }
+    .landing-nav .nav-logo .logo-text {
+      font-family: var(--serif);
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: var(--white);
+    }
+    .landing-nav .nav-logo .logo-text span { color: var(--cyan); }
+    .landing-nav .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .landing-nav .nav-links a {
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .landing-nav .nav-links a:hover { color: var(--white); }
+    .landing-nav .nav-cta { margin-left: 24px; }
+    .landing-nav .hamburger-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(160deg, #0B1F3A 60%, rgba(14,199,199,0.08));
+      padding: 120px 48px 80px;
+    }
+    .hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 55% 45%;
+      gap: 48px;
+      align-items: center;
+    }
+    .hero-text .hero-headline {
+      margin-bottom: 24px;
+    }
+    .hero-text .hero-sub {
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.6);
+      max-width: 520px;
+      margin-bottom: 32px;
+    }
+    .hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+    .hero-image {
+      position: relative;
+    }
+    .hero-image .dashboard-mockup {
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+      overflow: hidden;
+      background: rgba(4,10,22,0.6);
+    }
+    .hero-image .mockup-content {
+      padding: 24px;
+    }
+    .mockup-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .mockup-kpi {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .mockup-kpi-val {
+      font-family: var(--serif);
+      font-size: 24px;
+      color: var(--white);
+    }
+    .mockup-kpi-label {
+      font-family: var(--sans);
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .mockup-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-family: var(--sans);
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+    }
+    .mockup-row:last-child { border-bottom: none; }
+    .mockup-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Section base */
+    .section {
+      padding: 80px 48px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-dark-band {
+      background: rgba(4,10,22,0.4);
+    }
+    .section .section-heading {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section .section-label {
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .section .section-label::after { display: none; }
+
+    /* Problem cards */
+    .problem-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .problem-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-top: 3px solid #EF4444;
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .problem-card .card-icon { font-size: 32px; margin-bottom: 16px; }
+    .problem-card h3 {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .problem-card p {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+
+    /* How it Works */
+    .steps-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+      margin-top: 48px;
+    }
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 240px;
+    }
+    .step-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1E5FAD, #0EC7C7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--serif);
+      font-size: 20px;
+      color: var(--white);
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+    .step-line {
+      width: 80px;
+      height: 2px;
+      background: rgba(14,199,199,0.2);
+      margin-top: 24px;
+      flex-shrink: 0;
+    }
+    .step-item h3 {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .step-item p {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 24px;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 32px 24px;
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(14,199,199,0.1);
+      border: 1px solid rgba(14,199,199,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .feature-card h3 {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--white);
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+    }
+
+    /* Industries */
+    .industries-grid {
+      display: grid;
+      grid-template-columns: repeat(6,1fr);
+      gap: 24px;
+      text-align: center;
+    }
+    .industry-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .industry-icon { font-size: 32px; }
+    .industry-name {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--white);
+    }
+
+    /* Before / After */
+    .comparison-table {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .comparison-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .comparison-header div {
+      padding: 16px 24px;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 14px;
+      text-align: center;
+    }
+    .comparison-header .without { background: rgba(239,68,68,0.1); color: #F87171; }
+    .comparison-header .with { background: rgba(16,185,129,0.1); color: #34D399; }
+    .comparison-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .comparison-row:last-child { border-bottom: none; }
+    .comparison-row div {
+      padding: 14px 20px;
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+    .comparison-row .bad {
+      color: rgba(255,255,255,0.5);
+    }
+    .comparison-row .bad .x-mark { color: #F87171; margin-right: 8px; }
+    .comparison-row .good {
+      color: rgba(255,255,255,0.8);
+    }
+    .comparison-row .good .check-mark { color: #34D399; margin-right: 8px; }
+
+    .roi-box {
+      background: rgba(14,199,199,0.06);
+      border: 1px solid rgba(14,199,199,0.15);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 900px;
+      margin: 32px auto 0;
+    }
+    .roi-box .roi-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    .roi-box p {
+      font-family: var(--sans);
+      font-size: 15px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.7;
+    }
+
+    /* Testimonials */
+    .testimonials {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 24px;
+      margin-top: 32px;
+    }
+    .testimonial-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .testimonial-card .quote {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      font-style: italic;
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .testimonial-card .attribution {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Pricing */
+    .pricing-toggle {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .pricing-cards {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 24px;
+      align-items: start;
+    }
+    .pricing-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+    }
+    .pricing-card.recommended {
+      background: rgba(14,199,199,0.06);
+      border: 1px solid rgba(14,199,199,0.2);
+    }
+    .pricing-card .popular-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      background: var(--cyan);
+      padding: 4px 16px;
+      border-radius: 100px;
+      font-weight: 500;
+    }
+    .pricing-card .plan-name {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .pricing-card.recommended .plan-name { color: var(--cyan); }
+    .pricing-card .plan-price {
+      font-family: var(--serif);
+      font-size: 42px;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .pricing-card .plan-price .period {
+      font-family: var(--sans);
+      font-size: 16px;
+      color: var(--muted);
+    }
+    .pricing-card .plan-annual {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      display: none;
+    }
+    .pricing-card .plan-features {
+      margin: 24px 0;
+    }
+    .pricing-card .plan-features li {
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pricing-card .plan-features li::before {
+      content: '✓';
+      color: var(--cyan);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* FAQ */
+    .faq-container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Final CTA */
+    .final-cta {
+      background: linear-gradient(135deg, #1E5FAD, #0EC7C7);
+      padding: 80px 48px;
+      text-align: center;
+    }
+    .final-cta h2 {
+      font-family: var(--serif);
+      font-size: 36px;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+    .final-cta .sub {
+      font-family: var(--serif);
+      font-size: 20px;
+      color: rgba(255,255,255,0.85);
+      font-style: italic;
+      max-width: 600px;
+      margin: 0 auto 32px;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    .footer {
+      background: #070F1C;
+      padding: 48px 48px 24px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .footer-brand .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .footer-brand .footer-logo .logo-text {
+      font-family: var(--serif);
+      font-size: 18px;
+      color: var(--white);
+    }
+    .footer-brand .footer-logo .logo-text span { color: var(--cyan); }
+    .footer-tagline {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .footer-col h4 {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .footer-col a {
+      display: block;
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      padding: 4px 0;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--white); }
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 0 auto;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 24px;
+      margin-top: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-bottom p {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .footer-social {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-social a {
+      color: var(--muted);
+      font-size: 20px;
+      transition: color 0.2s;
+    }
+    .footer-social a:hover { color: var(--cyan); }
+
+    /* Mobile nav drawer */
+    .mobile-drawer {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .mobile-drawer.active { pointer-events: all; opacity: 1; }
+    .mobile-drawer .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+    }
+    .mobile-drawer .drawer-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--navy);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      padding: 24px;
+      transform: translateX(-100%);
+      transition: transform 0.3s;
+    }
+    .mobile-drawer.active .drawer-panel { transform: translateX(0); }
+    .mobile-drawer .drawer-panel a {
+      display: block;
+      font-family: var(--sans);
+      font-weight: 500;
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Video modal */
+    .video-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .video-modal.active { opacity: 1; pointer-events: all; }
+    .video-modal .video-container {
+      width: 90%;
+      max-width: 800px;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+    }
+    .video-modal .modal-close-video {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      color: var(--white);
+      font-size: 24px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-image { order: -1; max-width: 600px; margin: 0 auto; }
+      .features-grid { grid-template-columns: repeat(2,1fr); }
+      .industries-grid { grid-template-columns: repeat(3,1fr); }
+      .pricing-cards { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .landing-nav { padding: 0 16px; }
+      .landing-nav .nav-links { display: none; }
+      .landing-nav .nav-cta { display: none; }
+      .landing-nav .hamburger-btn { display: block; }
+      .hero { padding: 80px 16px 48px; }
+      .hero-headline { font-size: 36px !important; }
+      .section { padding: 48px 16px; }
+      .problem-cards { grid-template-columns: 1fr; }
+      .steps-row { flex-direction: column; align-items: center; }
+      .step-line { width: 2px; height: 40px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .industries-grid { grid-template-columns: repeat(2,1fr); }
+      .testimonials { grid-template-columns: 1fr; }
+      .comparison-header, .comparison-row { grid-template-columns: 1fr; }
+      .comparison-row .bad, .comparison-row .good { padding: 8px 20px; }
+      .final-cta { padding: 48px 16px; }
+      .final-cta h2 { font-size: 28px; }
+      .footer { padding: 32px 16px 16px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+    }
+  </style>
+</head>
+<body class="landing">
+
+  <!-- ═══════════════ NAVIGATION ═══════════════ -->
+  <nav class="landing-nav" id="landing-nav">
+    <a href="#hero" class="nav-logo">
+      <svg width="36" height="36" viewBox="0 0 44 44" fill="none">
+        <rect width="44" height="44" rx="11" fill="#1E5FAD"/>
+        <rect width="44" height="44" rx="11" fill="url(#lgrad-nav)" opacity="0.6"/>
+        <path d="M22 8C14.268 8 8 14.268 8 22C8 29.732 14.268 36 22 36C29.732 36 36 29.732 36 22" stroke="#0EC7C7" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="22" cy="22" r="3" fill="#0EC7C7"/>
+        <path d="M22 22L28 16" stroke="#0EC7C7" stroke-width="2" stroke-linecap="round"/>
+        <path d="M33 22L36 22" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        <path d="M35.5 16L32.7 17.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        <path d="M35.5 28L32.7 26.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        <defs><linearGradient id="lgrad-nav" x1="0" y1="0" x2="44" y2="44"><stop stop-color="#0EC7C7"/><stop offset="1" stop-color="#0EC7C7" stop-opacity="0"/></linearGradient></defs>
+      </svg>
+      <div class="logo-text">Calib<span>Flow</span></div>
+    </a>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#industries">Industries</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <a href="register.html" class="btn btn-primary btn-sm nav-cta">Start Free Trial</a>
+    <button class="hamburger-btn" onclick="toggleDrawer()">☰</button>
+  </nav>
+
+  <!-- Mobile Drawer -->
+  <div class="mobile-drawer" id="mobile-drawer">
+    <div class="overlay" onclick="toggleDrawer()"></div>
+    <div class="drawer-panel">
+      <a href="#features" onclick="toggleDrawer()">Features</a>
+      <a href="#industries" onclick="toggleDrawer()">Industries</a>
+      <a href="#pricing" onclick="toggleDrawer()">Pricing</a>
+      <a href="login.html">Login</a>
+      <div style="margin-top:16px;">
+        <a href="register.html" class="btn btn-primary btn-full">Start Free Trial</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ HERO ═══════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-inner">
+      <div class="hero-text anim-fade-in-up">
+        <h1 class="hero-headline">
+          Never miss a<br><em>deadline.</em>
+        </h1>
+        <p class="hero-sub">
+          CalibFlow tracks every instrument, sends alerts before deadlines, books vendors, and generates certificates — so you never fail an audit again.
+        </p>
+        <div class="hero-buttons">
+          <a href="register.html" class="btn btn-primary btn-lg">Start Free 14-Day Trial</a>
+          <button class="btn btn-secondary" onclick="openVideoModal()">▶ Watch Demo</button>
+        </div>
+      </div>
+      <div class="hero-image anim-fade-in-up" style="animation-delay:0.15s;">
+        <div class="dashboard-mockup">
+          <div class="dashboard-bar">
+            <div class="db-dots">
+              <div class="db-dot"></div>
+              <div class="db-dot"></div>
+              <div class="db-dot"></div>
+            </div>
+            <div class="db-url">app.calibflow.io/dashboard</div>
+          </div>
+          <div class="mockup-content">
+            <div class="mockup-kpi-row">
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-val">142</div>
+                <div class="mockup-kpi-label">Total Devices</div>
+              </div>
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-val" style="color:#34D399;">128</div>
+                <div class="mockup-kpi-label">Compliant</div>
+              </div>
+              <div class="mockup-kpi">
+                <div class="mockup-kpi-val" style="color:#F87171;">4</div>
+                <div class="mockup-kpi-label">Overdue</div>
+              </div>
+            </div>
+            <div class="mockup-row">
+              <div class="mockup-dot" style="background:#F87171;"></div>
+              <span style="flex:1;">Pressure Gauge PG-100</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">28 Mar</span>
+              <span class="badge badge-overdue" style="font-size:9px;padding:2px 8px;">Overdue</span>
+            </div>
+            <div class="mockup-row">
+              <div class="mockup-dot" style="background:#FBBF24;"></div>
+              <span style="flex:1;">Analytical Balance AB-300</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">02 May</span>
+              <span class="badge badge-due-soon" style="font-size:9px;padding:2px 8px;">Due Soon</span>
+            </div>
+            <div class="mockup-row">
+              <div class="mockup-dot" style="background:#34D399;"></div>
+              <span style="flex:1;">Flow Meter FM-400</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">20 Jan 27</span>
+              <span class="badge badge-compliant" style="font-size:9px;padding:2px 8px;">Compliant</span>
+            </div>
+            <div class="mockup-row">
+              <div class="mockup-dot" style="background:#34D399;"></div>
+              <span style="flex:1;">Oscilloscope OS-500</span>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">01 Mar 27</span>
+              <span class="badge badge-compliant" style="font-size:9px;padding:2px 8px;">Compliant</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PROBLEM STATEMENT ═══════════════ -->
+  <section class="section" id="problem">
+    <div class="section-label">THE PROBLEM</div>
+    <h2 class="section-heading">Does this sound familiar?</h2>
+    <div class="problem-cards">
+      <div class="problem-card">
+        <div class="card-icon">📋</div>
+        <h3>Spreadsheet Chaos</h3>
+        <p>Excel spreadsheets with wrong dates, missing devices, and no one accountable.</p>
+      </div>
+      <div class="problem-card">
+        <div class="card-icon">⏰</div>
+        <h3>Surprise Deadlines</h3>
+        <p>Missed calibration deadlines discovered the day before an audit.</p>
+      </div>
+      <div class="problem-card">
+        <div class="card-icon">📁</div>
+        <h3>Lost Certificates</h3>
+        <p>Certificates scattered across folders, emails, and filing cabinets.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ HOW IT WORKS ═══════════════ -->
+  <section class="section-dark-band">
+    <div class="section" id="how-it-works">
+      <div class="section-label">HOW IT WORKS</div>
+      <h2 class="section-heading">Three steps to audit-ready</h2>
+      <div class="steps-row">
+        <div class="step-item">
+          <div class="step-circle">1</div>
+          <h3>Register</h3>
+          <p>Add your devices once. We calculate every deadline automatically.</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle">2</div>
+          <h3>Monitor</h3>
+          <p>Get alerts at 30, 7, and 1 day via email and WhatsApp.</p>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle">3</div>
+          <h3>Certify</h3>
+          <p>Certificates generate automatically. Audit reports in one click.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FEATURES GRID ═══════════════ -->
+  <section class="section" id="features">
+    <div class="section-label">CORE SERVICES</div>
+    <h2 class="section-heading">Everything you need to stay compliant</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>Equipment Tracking</h3>
+        <p>One source of truth for every instrument. Auto-calculated due dates. Full history stored forever.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Automatic Alerts</h3>
+        <p>Personalized alerts at 30, 7, and 1 day via email and WhatsApp. Never chase anyone again.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Vendor Scheduling</h3>
+        <p>One-click confirmation books the vendor, creates calendar events, and updates the dashboard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>Certificate Generation</h3>
+        <p>Professional PDF certificates auto-generated the instant results are logged.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Audit-Ready Reports</h3>
+        <p>ISO and FDA formatted compliance reports generated in 30 seconds.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📈</div>
+        <h3>Compliance Dashboard</h3>
+        <p>Live compliance score with red/amber/green status. No meetings needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ INDUSTRIES ═══════════════ -->
+  <section class="section-dark-band">
+    <div class="section" id="industries">
+      <div class="section-label">WHO NEEDS CALIBFLOW</div>
+      <h2 class="section-heading">Built for industries that must calibrate</h2>
+      <div class="industries-grid">
+        <div class="industry-item">
+          <div class="industry-icon">🔬</div>
+          <div class="industry-name">ISO 17025 Labs</div>
+          <span class="badge badge-blue" style="font-size:9px;padding:3px 10px;">ISO 17025</span>
+        </div>
+        <div class="industry-item">
+          <div class="industry-icon">💊</div>
+          <div class="industry-name">Pharmaceutical</div>
+          <span class="badge badge-blue" style="font-size:9px;padding:3px 10px;">FDA 21 CFR</span>
+        </div>
+        <div class="industry-item">
+          <div class="industry-icon">🍔</div>
+          <div class="industry-name">Food & Beverage</div>
+          <span class="badge badge-blue" style="font-size:9px;padding:3px 10px;">ISO 22000</span>
+        </div>
+        <div class="industry-item">
+          <div class="industry-icon">🏥</div>
+          <div class="industry-name">Medical Devices</div>
+          <span class="badge badge-blue" style="font-size:9px;padding:3px 10px;">ISO 13485</span>
+        </div>
+        <div class="industry-item">
+          <div class="industry-icon">✈️</div>
+          <div class="industry-name">Aerospace & Defense</div>
+          <span class="badge badge-blue" style="font-size:9px;padding:3px 10px;">AS9100</span>
+        </div>
+        <div class="industry-item">
+          <div class="industry-icon">⛽</div>
+          <div class="industry-name">Oil, Gas & Energy</div>
+          <span class="badge badge-blue" style="font-size:9px;padding:3px 10px;">ISO 9001</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BEFORE / AFTER ═══════════════ -->
+  <section class="section" id="comparison">
+    <div class="section-label">THE DIFFERENCE</div>
+    <h2 class="section-heading">Before &amp; after — the same company, two realities</h2>
+    <div class="comparison-table">
+      <div class="comparison-header">
+        <div class="without">WITHOUT CALIBFLOW</div>
+        <div class="with">WITH CALIBFLOW</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> Excel spreadsheets with manual tracking</div>
+        <div class="good"><span class="check-mark">✓</span> Centralized cloud dashboard</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> Missed deadlines discovered during audits</div>
+        <div class="good"><span class="check-mark">✓</span> Automated alerts at 30, 7, and 1 day</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> Certificates lost in email threads</div>
+        <div class="good"><span class="check-mark">✓</span> One-click certificate library</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> Manual vendor phone calls & emails</div>
+        <div class="good"><span class="check-mark">✓</span> One-click vendor scheduling</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> Compliance reports take days to compile</div>
+        <div class="good"><span class="check-mark">✓</span> Audit-ready reports in 30 seconds</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> No visibility into compliance status</div>
+        <div class="good"><span class="check-mark">✓</span> Live compliance score with RAG status</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> 15+ hours/week on calibration admin</div>
+        <div class="good"><span class="check-mark">✓</span> 1 hour/week — everything automated</div>
+      </div>
+      <div class="comparison-row">
+        <div class="bad"><span class="x-mark">✕</span> Audit anxiety every quarter</div>
+        <div class="good"><span class="check-mark">✓</span> Always audit-ready, zero stress</div>
+      </div>
+    </div>
+    <div class="roi-box">
+      <div class="roi-label">ROI IN LESS THAN 30 DAYS</div>
+      <p>At $149/month, CalibFlow costs less than 3 hours of a QA manager's time. The average company saves 15+ hours/week on admin alone.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ SOCIAL PROOF ═══════════════ -->
+  <section class="section" id="social-proof">
+    <p style="font-family:var(--sans);font-weight:500;font-size:14px;color:var(--muted);text-align:center;">Trusted by ISO-certified labs worldwide</p>
+    <div class="testimonials">
+      <div class="testimonial-card">
+        <p class="quote">"CalibFlow saved us from a failed audit. We went from 12 hours of admin per week to about 20 minutes. The automated alerts alone are worth the subscription."</p>
+        <p class="attribution">— Sarah K., QA Manager, Food Testing Lab</p>
+      </div>
+      <div class="testimonial-card">
+        <p class="quote">"We had 400+ instruments across 3 sites with no central system. CalibFlow gave us visibility in a single afternoon. Our compliance went from 72% to 98% in one month."</p>
+        <p class="attribution">— Mark T., Lab Director, Pharmaceutical Company</p>
+      </div>
+      <div class="testimonial-card">
+        <p class="quote">"The certificate generation is a game changer. Our technicians scan a QR code, log results, and the certificate is already in the auditor's inbox. Incredible."</p>
+        <p class="attribution">— Dr. Lina R., Head of Quality, Medical Devices Manufacturer</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ PRICING ═══════════════ -->
+  <section class="section-dark-band">
+    <div class="section" id="pricing">
+      <div class="section-label">PRICING</div>
+      <h2 class="section-heading">Simple pricing. Serious value.</h2>
+      <div class="pricing-toggle">
+        <div class="segment-control">
+          <button class="segment-btn active" onclick="setPricing('monthly')">Monthly</button>
+          <button class="segment-btn" onclick="setPricing('annual')">Annual (save 2 months)</button>
+        </div>
+      </div>
+      <div class="pricing-cards">
+        <!-- Starter -->
+        <div class="pricing-card" id="pricing-starter">
+          <div class="plan-name">Starter</div>
+          <div class="plan-price" data-monthly="$149" data-annual="$1,490"><span class="amount">$149</span><span class="period">/mo</span></div>
+          <div class="plan-annual">Billed annually ($1,490/yr)</div>
+          <ul class="plan-features">
+            <li>Up to 50 devices</li>
+            <li>3 users</li>
+            <li>1 site</li>
+            <li>Email alerts</li>
+            <li>Certificate generation</li>
+            <li>Audit-ready reports</li>
+          </ul>
+          <a href="register.html" class="btn btn-secondary btn-full">Start Free Trial</a>
+        </div>
+        <!-- Pro -->
+        <div class="pricing-card recommended" id="pricing-pro">
+          <div class="popular-badge">MOST POPULAR</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price" data-monthly="$349" data-annual="$3,490"><span class="amount">$349</span><span class="period">/mo</span></div>
+          <div class="plan-annual">Billed annually ($3,490/yr)</div>
+          <ul class="plan-features">
+            <li>Up to 300 devices</li>
+            <li>10 users</li>
+            <li>5 sites</li>
+            <li>Email + WhatsApp alerts</li>
+            <li>Vendor scheduling</li>
+            <li>All report types</li>
+            <li>Priority support</li>
+          </ul>
+          <a href="register.html" class="btn btn-primary btn-full">Start Free Trial</a>
+        </div>
+        <!-- Enterprise -->
+        <div class="pricing-card" id="pricing-enterprise">
+          <div class="plan-name">Enterprise</div>
+          <div class="plan-price"><span class="amount" style="font-size:36px;">Custom</span></div>
+          <div class="plan-annual"></div>
+          <ul class="plan-features">
+            <li>Unlimited devices</li>
+            <li>Unlimited users</li>
+            <li>Unlimited sites</li>
+            <li>White-label certificates</li>
+            <li>API access</li>
+            <li>Dedicated account manager</li>
+            <li>Custom integrations</li>
+            <li>SLA guarantee</li>
+          </ul>
+          <a href="https://calendly.com" target="_blank" class="btn btn-ghost btn-full">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FAQ ═══════════════ -->
+  <section class="section" id="faq">
+    <h2 class="section-heading" style="margin-bottom:48px;">Questions? Answers.</h2>
+    <div class="faq-container">
+      <div class="accordion-item">
+        <button class="accordion-header">
+          <h3>What is CalibFlow?</h3>
+          <span class="accordion-toggle">+</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">CalibFlow is a cloud-based calibration management platform that automatically tracks every instrument your company owns, sends alerts before calibration deadlines, books vendors, generates professional certificates, and produces audit-ready compliance reports.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">
+          <h3>Is my data secure?</h3>
+          <span class="accordion-toggle">+</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">Yes. CalibFlow uses Supabase (built on PostgreSQL) with Row Level Security. Each company's data is completely isolated. We use HTTPS encryption for all data in transit and AES-256 for data at rest.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">
+          <h3>What regulations does CalibFlow support?</h3>
+          <span class="accordion-toggle">+</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">CalibFlow generates reports compatible with ISO 17025, ISO 9001, ISO 13485, ISO 22000, AS9100, and FDA 21 CFR Part 11 requirements.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">
+          <h3>How long does it take to set up?</h3>
+          <span class="accordion-toggle">+</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">Most companies are fully set up in under 2 hours. Import your existing equipment list from Excel, and CalibFlow automatically calculates every deadline.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">
+          <h3>Can I import from Excel?</h3>
+          <span class="accordion-toggle">+</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">Yes. Download our CSV template, paste your equipment data, upload it, and CalibFlow imports everything — device names, serial numbers, calibration dates, and intervals.</div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <button class="accordion-header">
+          <h3>What happens after my free trial?</h3>
+          <span class="accordion-toggle">+</span>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-body-inner">After 14 days, you choose a plan and start your subscription via Stripe. No data is lost. If you don't subscribe, your account becomes read-only — you can always come back.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ FINAL CTA ═══════════════ -->
+  <section class="final-cta">
+    <h2>Register your equipment once.</h2>
+    <p class="sub">Every reminder. Every vendor booking. Every certificate. Automatically. Forever.</p>
+    <a href="register.html" class="btn btn-white btn-lg" style="font-size:16px;padding:16px 32px;">Start Free 14-Day Trial</a>
+  </section>
+
+  <!-- ═══════════════ FOOTER ═══════════════ -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
+            <rect width="44" height="44" rx="11" fill="#1E5FAD"/>
+            <rect width="44" height="44" rx="11" fill="url(#lgrad-ft)" opacity="0.6"/>
+            <path d="M22 8C14.268 8 8 14.268 8 22C8 29.732 14.268 36 22 36C29.732 36 36 29.732 36 22" stroke="#0EC7C7" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="22" cy="22" r="3" fill="#0EC7C7"/>
+            <path d="M22 22L28 16" stroke="#0EC7C7" stroke-width="2" stroke-linecap="round"/>
+            <defs><linearGradient id="lgrad-ft" x1="0" y1="0" x2="44" y2="44"><stop stop-color="#0EC7C7"/><stop offset="1" stop-color="#0EC7C7" stop-opacity="0"/></linearGradient></defs>
+          </svg>
+          <div class="logo-text">Calib<span>Flow</span></div>
+        </div>
+        <p class="footer-tagline">Calibration, automated.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#" onclick="openVideoModal(); return false;">Demo</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="mailto:hello@calibflow.io">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Legal</h4>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 CalibFlow. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="https://linkedin.com/company/calibflow" target="_blank" aria-label="LinkedIn">🔗</a>
+        <a href="https://twitter.com/calibflow" target="_blank" aria-label="X / Twitter">𝕏</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Video Modal -->
+  <div class="video-modal" id="video-modal">
+    <div class="video-container" style="position:relative;">
+      <button class="modal-close-video" onclick="closeVideoModal()">✕</button>
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:var(--sans);">
+        <div style="text-align:center;">
+          <div style="font-size:48px;margin-bottom:16px;">▶</div>
+          <p>Demo video coming soon</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── FAQ Accordion ──
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const item = header.parentElement;
+        const body = item.querySelector('.accordion-body');
+        const isOpen = item.classList.contains('open');
+        
+        // Close all
+        document.querySelectorAll('.accordion-item').forEach(i => {
+          i.classList.remove('open');
+          i.querySelector('.accordion-body').style.maxHeight = null;
+        });
+        
+        if (!isOpen) {
+          item.classList.add('open');
+          body.style.maxHeight = body.scrollHeight + 'px';
+        }
+      });
+    });
+
+    // ── Pricing Toggle ──
+    function setPricing(mode) {
+      const btns = document.querySelectorAll('.segment-btn');
+      btns.forEach((b, i) => b.classList.toggle('active', i === (mode === 'annual' ? 1 : 0)));
+      
+      const cards = document.querySelectorAll('.pricing-card');
+      cards.forEach(card => {
+        const priceEl = card.querySelector('.plan-price');
+        const annualEl = card.querySelector('.plan-annual');
+        if (!priceEl) return;
+        const amountEl = priceEl.querySelector('.amount');
+        const periodEl = priceEl.querySelector('.period');
+        if (!amountEl) return;
+        
+        if (mode === 'annual') {
+          if (priceEl.dataset.annual) {
+            amountEl.textContent = priceEl.dataset.annual;
+            if (periodEl) periodEl.textContent = '/yr';
+            if (annualEl) annualEl.style.display = 'none';
+          }
+        } else {
+          if (priceEl.dataset.monthly) {
+            amountEl.textContent = priceEl.dataset.monthly;
+            if (periodEl) periodEl.textContent = '/mo';
+            if (annualEl) annualEl.style.display = 'none';
+          }
+        }
+      });
+    }
+
+    // ── Mobile Drawer ──
+    function toggleDrawer() {
+      document.getElementById('mobile-drawer').classList.toggle('active');
+    }
+
+    // ── Video Modal ──
+    function openVideoModal() {
+      document.getElementById('video-modal').classList.add('active');
+    }
+    function closeVideoModal() {
+      document.getElementById('video-modal').classList.remove('active');
+    }
+
+    // ── Smooth scroll for anchor links ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ── Navbar scroll effect ──
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('landing-nav');
+      if (window.scrollY > 50) {
+        nav.style.background = 'rgba(11,31,58,0.95)';
+      } else {
+        nav.style.background = 'rgba(11,31,58,0.85)';
+      }
+    });
+  </script>
+</body>
+</html>

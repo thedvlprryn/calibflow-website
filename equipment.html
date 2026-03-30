@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipment Registry — CalibFlow</title>
+  <meta name="description" content="Master list of all calibration instruments in your CalibFlow account.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .device-col { width: 22%; font-weight: 500; color: var(--white); }
+    .serial-col { width: 14%; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.6); }
+    .loc-col { width: 12%; font-size: 13px; color: rgba(255,255,255,0.6); }
+    .cat-col { width: 10%; font-size: 13px; color: rgba(255,255,255,0.5); }
+    .lastcal-col { width: 10%; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.6); }
+    .nextdue-col { width: 10%; font-family: var(--mono); font-size: 12px; color: var(--white); }
+    .days-col { width: 8%; font-family: var(--mono); font-size: 12px; }
+    .status-col { width: 8%; }
+    .actions-col { width: 6%; display: flex; gap: 8px; justify-content: flex-end; }
+    .action-icon {
+      font-size: 14px; color: var(--muted); cursor: pointer; transition: color 0.2s;
+      background: none; border: none; padding: 4px;
+    }
+    .action-icon:hover { color: var(--cyan); }
+    .sort-indicator { font-family: var(--mono); font-size: 10px; color: var(--cyan); margin-left: 4px; }
+    .table-header-cell { cursor: pointer; user-select: none; display: flex; align-items: center; }
+    .table-header-cell:hover { color: var(--cyan); }
+    .count-badge { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-left: 8px; }
+    .clear-filters {
+      font-family: var(--mono); font-size: 11px; color: var(--cyan); cursor: pointer;
+      background: none; border: none; display: none; padding: 6px 12px;
+    }
+    .clear-filters.visible { display: inline-flex; }
+
+    /* Import modal */
+    .import-steps { display: flex; flex-direction: column; gap: 24px; margin-top: 16px; }
+    .import-step { display: flex; gap: 12px; }
+    .import-step-num {
+      width: 28px; height: 28px; border-radius: 50%; background: rgba(14,199,199,0.1);
+      color: var(--cyan); font-family: var(--mono); font-size: 12px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .import-step-content { flex: 1; }
+    .import-step-content h4 { font-family: var(--sans); font-size: 14px; color: var(--white); margin-bottom: 4px; }
+    .import-step-content p { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+
+    @media (max-width: 1024px) {
+      .cat-col, .days-col, .actions-col { display: none; }
+      .device-col { width: 30%; }
+      .serial-col { width: 18%; }
+      .loc-col { width: 15%; }
+    }
+    @media (max-width: 768px) {
+      .loc-col, .lastcal-col { display: none; }
+      .device-col { width: 35%; }
+      .serial-col { width: 25%; }
+      .nextdue-col { width: 20%; }
+      .status-col { width: 20%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <!-- Header -->
+      <div class="page-header">
+        <div class="page-title">
+          <h1 class="h1">Equipment Registry</h1>
+          <span class="count-badge" id="total-count">(0 devices)</span>
+        </div>
+        <div class="flex gap-12">
+          <button class="btn btn-secondary btn-sm" onclick="openImportModal()">📥 Import from Excel</button>
+          <a href="equipment-add.html" class="btn btn-primary btn-sm">+ Add Device</a>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-input">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="input-field" id="search-input" placeholder="Search by device name or serial number..." oninput="filterEquipment()">
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-pill active" data-status="all" onclick="setStatusFilter('all')">All</button>
+        <button class="filter-pill" data-status="compliant" onclick="setStatusFilter('compliant')">Compliant</button>
+        <button class="filter-pill" data-status="due_soon" onclick="setStatusFilter('due_soon')">Due Soon</button>
+        <button class="filter-pill" data-status="overdue" onclick="setStatusFilter('overdue')">Overdue</button>
+        <button class="filter-pill" data-status="scheduled" onclick="setStatusFilter('scheduled')">Scheduled</button>
+        <select class="input-field" id="location-filter" style="width:auto;padding:6px 32px 6px 12px;font-size:13px;border-radius:100px;" onchange="filterEquipment()">
+          <option value="">All Locations</option>
+        </select>
+        <select class="input-field" id="category-filter" style="width:auto;padding:6px 32px 6px 12px;font-size:13px;border-radius:100px;" onchange="filterEquipment()">
+          <option value="">All Categories</option>
+          <option>Pressure</option>
+          <option>Temperature</option>
+          <option>Electrical</option>
+          <option>Weight</option>
+          <option>Flow</option>
+          <option>Other</option>
+        </select>
+        <button class="clear-filters" id="clear-filters" onclick="clearAllFilters()">✕ Clear filters</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container" id="equipment-table">
+        <div class="table-header">
+          <span class="device-col table-header-cell" onclick="sortBy('name')">Device <span class="sort-indicator" id="sort-name">▲</span></span>
+          <span class="serial-col table-header-cell" onclick="sortBy('serial_number')">Serial <span class="sort-indicator" id="sort-serial_number"></span></span>
+          <span class="loc-col table-header-cell" onclick="sortBy('location')">Location <span class="sort-indicator" id="sort-location"></span></span>
+          <span class="cat-col table-header-cell" onclick="sortBy('category')">Category <span class="sort-indicator" id="sort-category"></span></span>
+          <span class="lastcal-col table-header-cell" onclick="sortBy('last_calibration_date')">Last Cal. <span class="sort-indicator" id="sort-last_calibration_date"></span></span>
+          <span class="nextdue-col table-header-cell" onclick="sortBy('next_due_date')">Next Due <span class="sort-indicator" id="sort-next_due_date"></span></span>
+          <span class="days-col table-header-cell" onclick="sortBy('_days')">Days <span class="sort-indicator" id="sort-_days"></span></span>
+          <span class="status-col">Status</span>
+          <span class="actions-col">Actions</span>
+        </div>
+        <div id="table-body"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state" style="display:none;">
+        <div class="empty-state-icon">🔧</div>
+        <div class="empty-state-title">No equipment registered yet.</div>
+        <div class="empty-state-sub">Add your first device to get started.</div>
+        <a href="equipment-add.html" class="btn btn-primary">+ Add Your First Device</a>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div class="modal-overlay" id="import-modal">
+    <div class="modal" style="position:relative;">
+      <button class="modal-close" onclick="closeImportModal()">✕</button>
+      <h2 class="h2" style="margin-bottom:8px;">Import Equipment from Excel</h2>
+      <p style="font-size:14px;color:var(--muted);margin-bottom:16px;">Import your existing equipment list in 3 simple steps.</p>
+      <div class="import-steps">
+        <div class="import-step">
+          <div class="import-step-num">1</div>
+          <div class="import-step-content">
+            <h4>Download Template</h4>
+            <p>Get our CSV template with the correct column format.</p>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="showToast('Template downloaded!','success')">⬇ Download CSV Template</button>
+          </div>
+        </div>
+        <div class="import-step">
+          <div class="import-step-num">2</div>
+          <div class="import-step-content">
+            <h4>Upload Your File</h4>
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+              <p>📁 Drop your CSV file here or click to browse</p>
+              <input type="file" id="file-input" accept=".csv" style="display:none;" onchange="handleFileUpload(this)">
+            </div>
+            <div id="file-name" style="font-family:var(--mono);font-size:12px;color:var(--cyan);margin-top:8px;display:none;"></div>
+          </div>
+        </div>
+        <div class="import-step">
+          <div class="import-step-num">3</div>
+          <div class="import-step-content">
+            <h4>Confirm Import</h4>
+            <p>Review the data and click import.</p>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="showToast('Equipment imported successfully!','success');closeImportModal();">✓ Confirm Import</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Equipment');
+    buildSidebar('Equipment');
+
+    let allEquipment = [...DEMO_EQUIPMENT];
+    let filteredEquipment = [];
+    let currentStatusFilter = 'all';
+    let currentSort = { field: 'next_due_date', dir: 'asc' };
+    let currentPage = 1;
+    const perPage = 25;
+
+    // Pre-select filter from URL params
+    const urlStatus = new URLSearchParams(window.location.search).get('status');
+    if (urlStatus) {
+      currentStatusFilter = urlStatus;
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.status === urlStatus);
+      });
+    }
+
+    // Populate location filter
+    const locFilter = document.getElementById('location-filter');
+    DEMO_LOCATIONS.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = l.name;
+      opt.textContent = l.name;
+      locFilter.appendChild(opt);
+    });
+
+    function setStatusFilter(status) {
+      currentStatusFilter = status;
+      currentPage = 1;
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.status === status);
+      });
+      filterEquipment();
+    }
+
+    function filterEquipment() {
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const locVal = document.getElementById('location-filter').value;
+      const catVal = document.getElementById('category-filter').value;
+
+      // Recalculate statuses
+      allEquipment.forEach(e => {
+        const days = daysUntil(e.next_due_date);
+        e._days = days;
+        if (days !== null) {
+          if (days <= 0) e.status = 'overdue';
+          else if (days <= 30) e.status = 'due_soon';
+          else e.status = 'compliant';
+        }
+      });
+
+      filteredEquipment = allEquipment.filter(e => {
+        if (!e.active) return false;
+        if (currentStatusFilter !== 'all' && e.status !== currentStatusFilter) return false;
+        if (search && !e.name.toLowerCase().includes(search) && !e.serial_number.toLowerCase().includes(search)) return false;
+        if (locVal && e.location !== locVal) return false;
+        if (catVal && e.category !== catVal) return false;
+        return true;
+      });
+
+      // Show/hide clear filters
+      const hasFilters = currentStatusFilter !== 'all' || search || locVal || catVal;
+      document.getElementById('clear-filters').classList.toggle('visible', hasFilters);
+
+      sortEquipment();
+      renderTable();
+    }
+
+    function sortBy(field) {
+      if (currentSort.field === field) {
+        currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        currentSort.field = field;
+        currentSort.dir = 'asc';
+      }
+      // Update indicators
+      document.querySelectorAll('.sort-indicator').forEach(s => s.textContent = '');
+      const indicator = document.getElementById(`sort-${field}`);
+      if (indicator) indicator.textContent = currentSort.dir === 'asc' ? '▲' : '▼';
+      sortEquipment();
+      renderTable();
+    }
+
+    function sortEquipment() {
+      filteredEquipment.sort((a, b) => {
+        let valA = a[currentSort.field];
+        let valB = b[currentSort.field];
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+        if (valA < valB) return currentSort.dir === 'asc' ? -1 : 1;
+        if (valA > valB) return currentSort.dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    function renderTable() {
+      const tableBody = document.getElementById('table-body');
+      const emptyState = document.getElementById('empty-state');
+      const tableEl = document.getElementById('equipment-table');
+
+      document.getElementById('total-count').textContent = `(${filteredEquipment.length} devices)`;
+
+      if (filteredEquipment.length === 0) {
+        tableEl.style.display = 'none';
+        emptyState.style.display = 'flex';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+
+      tableEl.style.display = 'block';
+      emptyState.style.display = 'none';
+
+      const totalPages = Math.ceil(filteredEquipment.length / perPage);
+      const start = (currentPage - 1) * perPage;
+      const pageItems = filteredEquipment.slice(start, start + perPage);
+
+      tableBody.innerHTML = pageItems.map(e => {
+        const days = e._days;
+        let daysColor = 'var(--compliant-text)';
+        let daysText = days !== null ? (days > 0 ? `+${days}d` : `${days}d`) : '—';
+        if (days !== null) {
+          if (days <= 0) daysColor = 'var(--overdue-text)';
+          else if (days <= 30) daysColor = 'var(--due-soon-text)';
+        }
+
+        return `
+          <div class="table-row" onclick="location.href='equipment-detail.html?id=${e.id}'">
+            <span class="device-col">${e.name}</span>
+            <span class="serial-col">${e.serial_number}</span>
+            <span class="loc-col">${e.location}</span>
+            <span class="cat-col">${e.category}</span>
+            <span class="lastcal-col">${formatDate(e.last_calibration_date)}</span>
+            <span class="nextdue-col">${formatDate(e.next_due_date)}</span>
+            <span class="days-col" style="color:${daysColor}">${daysText}</span>
+            <span class="status-col">${getStatusBadge(e.status)}</span>
+            <span class="actions-col" onclick="event.stopPropagation()">
+              <button class="action-icon" onclick="location.href='equipment-add.html?id=${e.id}'" title="Edit">✏️</button>
+              <button class="action-icon" title="Schedule">📅</button>
+              <button class="action-icon" title="Certificate">📄</button>
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      // Pagination
+      const pag = document.getElementById('pagination');
+      if (totalPages <= 1) { pag.innerHTML = ''; return; }
+
+      let pagHtml = `<button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>←</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && i > 3 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+          if (i === 4) pagHtml += '<span class="pagination-btn">...</span>';
+          continue;
+        }
+        pagHtml += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+      }
+      pagHtml += `<button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>→</button>`;
+      pag.innerHTML = pagHtml;
+    }
+
+    function goToPage(page) {
+      const totalPages = Math.ceil(filteredEquipment.length / perPage);
+      if (page < 1 || page > totalPages) return;
+      currentPage = page;
+      renderTable();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearAllFilters() {
+      currentStatusFilter = 'all';
+      currentPage = 1;
+      document.getElementById('search-input').value = '';
+      document.getElementById('location-filter').value = '';
+      document.getElementById('category-filter').value = '';
+      document.querySelectorAll('.filter-pill').forEach(p => {
+        p.classList.toggle('active', p.dataset.status === 'all');
+      });
+      filterEquipment();
+    }
+
+    // Import Modal
+    function openImportModal() { document.getElementById('import-modal').classList.add('active'); }
+    function closeImportModal() { document.getElementById('import-modal').classList.remove('active'); }
+
+    function handleFileUpload(input) {
+      if (input.files.length > 0) {
+        const name = input.files[0].name;
+        document.getElementById('file-name').textContent = `📎 ${name}`;
+        document.getElementById('file-name').style.display = 'block';
+        document.getElementById('drop-zone').querySelector('p').textContent = '✓ File selected';
+      }
+    }
+
+    // Drag and drop
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) {
+      dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+      dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+    }
+
+    // Initial render
+    filterEquipment();
+  </script>
+</body>
+</html>

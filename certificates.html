@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificate Library — CalibFlow</title>
+  <meta name="description" content="Single source of truth for all calibration certificates.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 24px;
+    }
+    .stat-value { font-family: var(--serif); font-size: 24px; color: var(--white); }
+    .stat-label { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    .cert-col { width: 16%; font-family: var(--mono); font-size: 13px; color: var(--cyan); }
+    .cert-device-col { width: 22%; font-weight: 500; color: var(--white); }
+    .cert-serial-col { width: 14%; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .cert-date-col { width: 14%; font-family: var(--mono); font-size: 12px; color: var(--white); }
+    .cert-result-col { width: 10%; }
+    .cert-valid-col { width: 14%; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .cert-actions-col { width: 10%; display: flex; gap: 8px; justify-content: flex-end; }
+
+    .cert-checkbox { margin-right: 12px; }
+    .cert-checkbox input { display: none; }
+    .cert-checkbox .checkmark {
+      width: 16px; height: 16px; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 4px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .cert-checkbox input:checked + .checkmark { background: var(--cyan); border-color: var(--cyan); }
+    .cert-checkbox input:checked + .checkmark::after { content: '✓'; color: #fff; font-size: 10px; font-weight: 700; }
+
+    /* Floating action bar */
+    .bulk-bar {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(11,31,58,0.95); border: 1px solid rgba(14,199,199,0.2);
+      border-radius: 12px; padding: 12px 20px; backdrop-filter: blur(12px);
+      display: none; align-items: center; gap: 16px; z-index: 999;
+    }
+    .bulk-bar.active { display: flex; }
+    .bulk-count { font-family: var(--mono); font-size: 12px; color: var(--cyan); }
+
+    /* Share modal */
+    .share-url-field {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 10px 12px; font-family: var(--mono); font-size: 12px;
+      color: var(--cyan); width: 100%; user-select: all; margin: 12px 0;
+    }
+
+    .filter-row { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .cert-serial-col, .cert-valid-col { display: none; }
+      .cert-col { width: 20%; }
+      .cert-device-col { width: 30%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <div class="page-header">
+        <h1 class="h1">Certificate Library</h1>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" id="cert-stats"></div>
+
+      <!-- Search + Filters -->
+      <div class="search-input">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="input-field" id="cert-search" placeholder="Search by certificate number, device name, or serial..." oninput="filterCerts()">
+      </div>
+      <div class="filter-row">
+        <div class="input-group" style="margin-bottom:0;width:auto;">
+          <input type="date" class="input-field" id="date-from" style="width:auto;padding:6px 12px;font-size:13px;" placeholder="From" onchange="filterCerts()">
+        </div>
+        <span style="color:var(--muted);font-size:13px;">to</span>
+        <div class="input-group" style="margin-bottom:0;width:auto;">
+          <input type="date" class="input-field" id="date-to" style="width:auto;padding:6px 12px;font-size:13px;" placeholder="To" onchange="filterCerts()">
+        </div>
+        <select class="input-field" id="result-filter" style="width:auto;padding:6px 32px 6px 12px;font-size:13px;border-radius:100px;" onchange="filterCerts()">
+          <option value="">All Results</option>
+          <option value="pass">Pass</option>
+          <option value="fail">Fail</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <div class="table-header">
+          <span style="width:28px;"><label class="cert-checkbox"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"><span class="checkmark"></span></label></span>
+          <span class="cert-col">Certificate #</span>
+          <span class="cert-device-col">Device</span>
+          <span class="cert-serial-col">Serial</span>
+          <span class="cert-date-col">Cal. Date</span>
+          <span class="cert-result-col">Result</span>
+          <span class="cert-valid-col">Valid Until</span>
+          <span class="cert-actions-col">Actions</span>
+        </div>
+        <div id="cert-body"></div>
+      </div>
+
+      <div class="pagination" id="cert-pagination"></div>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div class="bulk-bar" id="bulk-bar">
+    <span class="bulk-count" id="bulk-count">0 selected</span>
+    <button class="btn btn-primary btn-sm" onclick="showToast('Downloading ZIP...','info')">⬇ Download as ZIP</button>
+    <button class="btn btn-ghost btn-sm" onclick="openShareModal()">🔗 Share Selected</button>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal-overlay" id="share-modal">
+    <div class="modal" style="position:relative;max-width:440px;">
+      <button class="modal-close" onclick="closeShareModal()">✕</button>
+      <h2 class="h2" style="margin-bottom:8px;">Share Certificates</h2>
+      <p style="font-size:13px;color:var(--muted);">Share this link with your auditor</p>
+      <div class="share-url-field" id="share-url">https://app.calibflow.io/share/certs/abc123def456</div>
+      <button class="btn btn-primary btn-sm btn-full" onclick="navigator.clipboard?.writeText(document.getElementById('share-url').textContent);showToast('Link copied!','success');">📋 Copy Link</button>
+      <p style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;text-align:center;">This link expires in 72 hours.</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Certificates');
+    buildSidebar('Certificates');
+
+    let selectedCerts = new Set();
+    let filteredCerts = [...DEMO_CERTIFICATES];
+
+    function renderStats() {
+      const total = DEMO_CERTIFICATES.length;
+      const thisYear = DEMO_CERTIFICATES.filter(c => c.calibration_date >= '2026-01-01').length;
+      const thisMonth = DEMO_CERTIFICATES.filter(c => c.calibration_date >= '2026-03-01').length;
+
+      document.getElementById('cert-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${total}</div><div class="stat-label">Total Certificates</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--cyan);">${thisYear}</div><div class="stat-label">Issued This Year</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--cyan);">${thisMonth}</div><div class="stat-label">Issued This Month</div></div>
+      `;
+    }
+
+    function filterCerts() {
+      const search = document.getElementById('cert-search').value.toLowerCase();
+      const result = document.getElementById('result-filter').value;
+      const from = document.getElementById('date-from').value;
+      const to = document.getElementById('date-to').value;
+
+      filteredCerts = DEMO_CERTIFICATES.filter(c => {
+        if (search && !c.cert_number.toLowerCase().includes(search) && !c.device_name.toLowerCase().includes(search) && !c.serial_number.toLowerCase().includes(search)) return false;
+        if (result && c.result !== result) return false;
+        if (from && c.calibration_date < from) return false;
+        if (to && c.calibration_date > to) return false;
+        return true;
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const body = document.getElementById('cert-body');
+      body.innerHTML = filteredCerts.map(c => `
+        <div class="table-row">
+          <span style="width:28px;"><label class="cert-checkbox"><input type="checkbox" data-id="${c.id}" onchange="toggleCert(${c.id})" ${selectedCerts.has(c.id)?'checked':''}><span class="checkmark"></span></label></span>
+          <span class="cert-col">${c.cert_number}</span>
+          <span class="cert-device-col" style="cursor:pointer;" onclick="location.href='equipment-detail.html?id=${c.equipment_id}'">${c.device_name}</span>
+          <span class="cert-serial-col">${c.serial_number}</span>
+          <span class="cert-date-col">${formatDate(c.calibration_date)}</span>
+          <span class="cert-result-col">${c.result === 'pass'
+            ? '<span class="badge badge-compliant"><span class="badge-dot"></span>PASS</span>'
+            : '<span class="badge badge-overdue"><span class="badge-dot"></span>FAIL</span>'}</span>
+          <span class="cert-valid-col">${formatDate(c.valid_until)}</span>
+          <span class="cert-actions-col">
+            <button class="action-icon" title="Download" onclick="showToast('Downloading certificate...','info')">⬇️</button>
+            <button class="action-icon" title="Share" onclick="openShareModal()">🔗</button>
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function toggleCert(id) {
+      if (selectedCerts.has(id)) selectedCerts.delete(id);
+      else selectedCerts.add(id);
+      updateBulkBar();
+    }
+
+    function toggleSelectAll() {
+      const checked = document.getElementById('select-all').checked;
+      if (checked) filteredCerts.forEach(c => selectedCerts.add(c.id));
+      else selectedCerts.clear();
+      renderTable();
+      updateBulkBar();
+    }
+
+    function updateBulkBar() {
+      const bar = document.getElementById('bulk-bar');
+      if (selectedCerts.size > 0) {
+        bar.classList.add('active');
+        document.getElementById('bulk-count').textContent = `${selectedCerts.size} selected`;
+      } else {
+        bar.classList.remove('active');
+      }
+    }
+
+    function openShareModal() { document.getElementById('share-modal').classList.add('active'); }
+    function closeShareModal() { document.getElementById('share-modal').classList.remove('active'); }
+
+    renderStats();
+    renderTable();
+  </script>
+</body>
+</html>

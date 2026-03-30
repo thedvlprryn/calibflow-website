@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — CalibFlow</title>
+  <meta name="description" content="Generate audit-ready compliance reports in one click.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .date-range-bar {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 32px; flex-wrap: wrap;
+    }
+    .quick-range {
+      font-family: var(--sans); font-size: 13px; font-weight: 500; padding: 6px 16px;
+      border-radius: var(--radius-pill); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted); background: transparent; cursor: pointer; transition: all 0.2s;
+    }
+    .quick-range:hover { background: rgba(255,255,255,0.04); }
+    .quick-range.active { background: rgba(14,199,199,0.1); color: var(--cyan); border-color: rgba(14,199,199,0.2); }
+
+    .report-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 24px; margin-bottom: 48px; }
+    .report-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 32px; cursor: pointer; transition: border-color 0.2s;
+    }
+    .report-card:hover { border-color: rgba(14,199,199,0.3); }
+    .report-icon { font-size: 32px; margin-bottom: 16px; }
+    .report-title { font-family: var(--sans); font-weight: 600; font-size: 18px; color: var(--white); margin-bottom: 8px; }
+    .report-desc { font-family: var(--sans); font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 16px; }
+    .report-status {
+      font-family: var(--sans); font-size: 13px; color: var(--cyan); display: none;
+      align-items: center; gap: 8px; margin-top: 12px;
+    }
+    .report-status.active { display: flex; }
+    .report-pulse {
+      width: 8px; height: 8px; border-radius: 50%; background: var(--cyan);
+      animation: pulse 2s ease-out infinite;
+    }
+
+    /* Past Reports */
+    .past-col-type { width: 25%; font-weight: 500; color: var(--white); }
+    .past-col-range { width: 25%; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.6); }
+    .past-col-date { width: 20%; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.6); }
+    .past-col-by { width: 20%; font-size: 13px; color: rgba(255,255,255,0.6); }
+    .past-col-dl { width: 10%; text-align: right; }
+
+    @media (max-width: 768px) {
+      .report-grid { grid-template-columns: 1fr; }
+      .date-range-bar { overflow-x: auto; flex-wrap: nowrap; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <div class="page-header">
+        <h1 class="h1">Reports</h1>
+      </div>
+
+      <!-- Date Range -->
+      <div class="date-range-bar">
+        <button class="quick-range active" onclick="selectRange(this, 30)">Last 30 days</button>
+        <button class="quick-range" onclick="selectRange(this, 90)">Last 90 days</button>
+        <button class="quick-range" onclick="selectRange(this, 'year')">This Year</button>
+        <button class="quick-range" onclick="selectRange(this, 'lastyear')">Last Year</button>
+        <div class="flex gap-8 items-center">
+          <input type="date" class="input-field" id="custom-from" style="width:auto;padding:6px 12px;font-size:12px;">
+          <span style="color:var(--muted);font-size:12px;">to</span>
+          <input type="date" class="input-field" id="custom-to" style="width:auto;padding:6px 12px;font-size:12px;">
+        </div>
+      </div>
+
+      <!-- Report Cards -->
+      <div class="report-grid">
+        <div class="report-card" id="report-compliance">
+          <div class="report-icon">📋</div>
+          <div class="report-title">Full Compliance Report</div>
+          <div class="report-desc">All devices, status, last cert, next due, cert number — ISO/FDA format</div>
+          <button class="btn btn-primary btn-sm" onclick="generateReport('compliance', this)">Generate</button>
+          <div class="report-status" id="status-compliance"><div class="report-pulse"></div>Report generating... You'll receive an email in ~2 minutes.</div>
+        </div>
+        <div class="report-card" id="report-overdue">
+          <div class="report-icon">🔴</div>
+          <div class="report-title">Overdue Report</div>
+          <div class="report-desc">Only past-due devices with days overdue and responsible person</div>
+          <button class="btn btn-primary btn-sm" onclick="generateReport('overdue', this)">Generate</button>
+          <div class="report-status" id="status-overdue"><div class="report-pulse"></div>Report generating... You'll receive an email in ~2 minutes.</div>
+        </div>
+        <div class="report-card" id="report-site">
+          <div class="report-icon">🏢</div>
+          <div class="report-title">Site Summary</div>
+          <div class="report-desc">Compliance % per location with bar chart breakdown</div>
+          <button class="btn btn-primary btn-sm" onclick="generateReport('site', this)">Generate</button>
+          <div class="report-status" id="status-site"><div class="report-pulse"></div>Report generating... You'll receive an email in ~2 minutes.</div>
+        </div>
+        <div class="report-card" id="report-certs">
+          <div class="report-icon">📄</div>
+          <div class="report-title">Certificate History</div>
+          <div class="report-desc">All certificates in date range, grouped by device</div>
+          <button class="btn btn-primary btn-sm" onclick="generateReport('certs', this)">Generate</button>
+          <div class="report-status" id="status-certs"><div class="report-pulse"></div>Report generating... You'll receive an email in ~2 minutes.</div>
+        </div>
+      </div>
+
+      <!-- Past Reports -->
+      <div class="section-label">PREVIOUSLY GENERATED</div>
+      <div class="table-container">
+        <div class="table-header">
+          <span class="past-col-type">Report Type</span>
+          <span class="past-col-range">Date Range</span>
+          <span class="past-col-date">Generated</span>
+          <span class="past-col-by">By</span>
+          <span class="past-col-dl">Download</span>
+        </div>
+        <div id="past-reports-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Reports');
+    buildSidebar('Reports');
+
+    const pastReports = [
+      { type: 'Full Compliance Report', range: '01 Jan – 28 Mar 2026', date: '2026-03-25', by: 'admin@company.com' },
+      { type: 'Overdue Report', range: '01 Mar – 28 Mar 2026', date: '2026-03-20', by: 'admin@company.com' },
+      { type: 'Site Summary', range: '01 Jan – 28 Feb 2026', date: '2026-03-01', by: 'qa@company.com' },
+      { type: 'Certificate History', range: '01 Jul – 31 Dec 2025', date: '2026-01-05', by: 'admin@company.com' },
+    ];
+
+    function renderPastReports() {
+      document.getElementById('past-reports-body').innerHTML = pastReports.map(r => `
+        <div class="table-row">
+          <span class="past-col-type">${r.type}</span>
+          <span class="past-col-range">${r.range}</span>
+          <span class="past-col-date">${formatDate(r.date)}</span>
+          <span class="past-col-by">${r.by}</span>
+          <span class="past-col-dl"><button class="action-icon" onclick="showToast('Downloading report...','info')">⬇️</button></span>
+        </div>
+      `).join('');
+    }
+
+    function selectRange(btn, range) {
+      document.querySelectorAll('.quick-range').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function generateReport(type, btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Generating...';
+      document.getElementById(`status-${type}`).classList.add('active');
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = 'Generate';
+        document.getElementById(`status-${type}`).classList.remove('active');
+        showToast('Report generated! Check your email for the download link.', 'success');
+
+        // Add to past reports
+        pastReports.unshift({
+          type: btn.closest('.report-card').querySelector('.report-title').textContent,
+          range: 'Last 30 days',
+          date: new Date().toISOString().split('T')[0],
+          by: 'admin@company.com'
+        });
+        renderPastReports();
+      }, 3000);
+    }
+
+    renderPastReports();
+  </script>
+</body>
+</html>

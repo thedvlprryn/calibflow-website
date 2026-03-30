@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — CalibFlow</title>
+  <meta name="description" content="Start your free 14-day CalibFlow trial. Set up your calibration management in minutes.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: var(--navy); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 32px 16px; }
+    .register-container { max-width: 560px; width: 100%; }
+    .register-logo { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 32px; }
+    .register-logo .logo-name { font-family: var(--serif); font-size: 24px; color: var(--white); letter-spacing: -0.5px; }
+    .register-logo .logo-name span { color: var(--cyan); }
+    .register-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 40px;
+    }
+    .step-heading { font-family: var(--sans); font-weight: 700; font-size: 24px; color: var(--white); margin-bottom: 8px; }
+    .step-sub { font-family: var(--sans); font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 28px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; }
+    .btn-row .btn { min-width: 120px; }
+    .step-content { display: none; }
+    .step-content.active { display: block; animation: fadeInUp 0.3s ease-out; }
+    .register-footer { text-align: center; margin-top: 24px; font-family: var(--sans); font-size: 13px; color: var(--muted); }
+    .register-footer a { color: var(--cyan); font-weight: 600; }
+
+    /* Password strength */
+    .strength-bar-container { display: flex; gap: 4px; margin-top: 8px; }
+    .strength-segment { height: 3px; flex: 1; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 0.3s; }
+    .strength-text { font-family: var(--mono); font-size: 10px; margin-top: 4px; color: var(--muted); }
+
+    /* Next due preview */
+    .due-preview {
+      background: rgba(14,199,199,0.06);
+      border: 1px solid rgba(14,199,199,0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--cyan);
+      margin-top: 16px;
+    }
+    .due-preview.empty { color: var(--muted); }
+
+    /* Terms checkbox */
+    .terms-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 16px; cursor: pointer; }
+    .terms-row input { display: none; }
+    .terms-check {
+      width: 18px; height: 18px; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+      transition: all 0.2s;
+    }
+    .terms-row input:checked + .terms-check { background: var(--cyan); border-color: var(--cyan); }
+    .terms-row input:checked + .terms-check::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+    .terms-text { font-family: var(--sans); font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+    .terms-text a { color: var(--cyan); }
+
+    .skip-link { font-family: var(--sans); font-size: 14px; color: var(--muted); cursor: pointer; background: none; border: none; }
+    .skip-link:hover { color: var(--white); }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .register-card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <div class="register-logo">
+      <svg width="36" height="36" viewBox="0 0 44 44" fill="none">
+        <rect width="44" height="44" rx="11" fill="#1E5FAD"/>
+        <rect width="44" height="44" rx="11" fill="url(#lg)" opacity="0.6"/>
+        <path d="M22 8C14.268 8 8 14.268 8 22C8 29.732 14.268 36 22 36C29.732 36 36 29.732 36 22" stroke="#0EC7C7" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="22" cy="22" r="3" fill="#0EC7C7"/>
+        <path d="M22 22L28 16" stroke="#0EC7C7" stroke-width="2" stroke-linecap="round"/>
+        <path d="M33 22L36 22" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        <path d="M35.5 16L32.7 17.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        <path d="M35.5 28L32.7 26.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="44" y2="44"><stop stop-color="#0EC7C7"/><stop offset="1" stop-color="#0EC7C7" stop-opacity="0"/></linearGradient></defs>
+      </svg>
+      <div class="logo-name">Calib<span>Flow</span></div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+      <div class="progress-step active" id="ps-1">
+        <div class="progress-circle current" id="pc-1">1</div>
+        <span class="progress-step-label">Company</span>
+      </div>
+      <div class="progress-line" id="pl-1"></div>
+      <div class="progress-step" id="ps-2">
+        <div class="progress-circle future" id="pc-2">2</div>
+        <span class="progress-step-label">Account</span>
+      </div>
+      <div class="progress-line" id="pl-2"></div>
+      <div class="progress-step" id="ps-3">
+        <div class="progress-circle future" id="pc-3">3</div>
+        <span class="progress-step-label">First Device</span>
+      </div>
+    </div>
+
+    <div class="register-card">
+      <!-- Step 1: Company -->
+      <div class="step-content active" id="step-1">
+        <h2 class="step-heading">Tell us about your company</h2>
+        <p class="step-sub">We'll use this to customize your experience.</p>
+        <div class="input-group">
+          <label class="field-label" for="company-name">Company Name *</label>
+          <input type="text" id="company-name" class="input-field" placeholder="Your company name">
+          <div class="field-error" id="company-name-error">Company name is required</div>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label class="field-label" for="industry">Industry</label>
+            <select id="industry" class="input-field">
+              <option value="">Select industry</option>
+              <option>Laboratory</option>
+              <option>Pharmaceutical</option>
+              <option>Food & Beverage</option>
+              <option>Medical Devices</option>
+              <option>Aerospace & Defense</option>
+              <option>Oil, Gas & Energy</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label class="field-label" for="est-devices">Estimated Devices</label>
+            <select id="est-devices" class="input-field">
+              <option value="">Select range</option>
+              <option>1–50</option>
+              <option>51–200</option>
+              <option>200+</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <div></div>
+          <button class="btn btn-primary" onclick="goToStep(2)">Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Account -->
+      <div class="step-content" id="step-2">
+        <h2 class="step-heading">Create your account</h2>
+        <p class="step-sub">Your login credentials for CalibFlow.</p>
+        <div class="input-group">
+          <label class="field-label" for="full-name">Full Name *</label>
+          <input type="text" id="full-name" class="input-field" placeholder="Your full name">
+          <div class="field-error" id="full-name-error">Full name is required</div>
+        </div>
+        <div class="input-group">
+          <label class="field-label" for="work-email">Work Email *</label>
+          <input type="email" id="work-email" class="input-field" placeholder="you@company.com">
+          <div class="field-error" id="work-email-error">Valid email is required</div>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label class="field-label" for="reg-password">Password *</label>
+            <input type="password" id="reg-password" class="input-field" placeholder="Min 8 characters" oninput="checkPasswordStrength()">
+            <div class="strength-bar-container">
+              <div class="strength-segment" id="str-1"></div>
+              <div class="strength-segment" id="str-2"></div>
+              <div class="strength-segment" id="str-3"></div>
+              <div class="strength-segment" id="str-4"></div>
+            </div>
+            <div class="strength-text" id="strength-text"></div>
+            <div class="field-error" id="reg-password-error">Password must be at least 8 characters</div>
+          </div>
+          <div class="input-group">
+            <label class="field-label" for="confirm-password">Confirm Password *</label>
+            <input type="password" id="confirm-password" class="input-field" placeholder="Re-enter password">
+            <div class="field-error" id="confirm-password-error">Passwords don't match</div>
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="field-label" for="phone">Phone <span style="color:var(--muted);font-size:9px;letter-spacing:1px;">(OPTIONAL — FOR WHATSAPP ALERTS)</span></label>
+          <input type="tel" id="phone" class="input-field" placeholder="+1 234 567 8900">
+        </div>
+        <label class="terms-row" id="terms-label">
+          <input type="checkbox" id="terms-check">
+          <span class="terms-check"></span>
+          <span class="terms-text">I agree to the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a></span>
+        </label>
+        <div class="field-error" id="terms-error" style="margin-top:4px;">You must agree to continue</div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+          <button class="btn btn-primary" onclick="goToStep(3)">Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: First Device -->
+      <div class="step-content" id="step-3">
+        <h2 class="step-heading">Add your first device</h2>
+        <p class="step-sub">You can skip this and add devices later from your dashboard.</p>
+        <div class="form-row">
+          <div class="input-group">
+            <label class="field-label" for="device-name">Device Name</label>
+            <input type="text" id="device-name" class="input-field" placeholder="e.g., Pressure Gauge PG-100">
+          </div>
+          <div class="input-group">
+            <label class="field-label" for="serial-number">Serial Number</label>
+            <input type="text" id="serial-number" class="input-field" placeholder="e.g., SN-2024-00142" style="font-family:var(--mono);">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="input-group">
+            <label class="field-label" for="last-cal-date">Last Calibration Date</label>
+            <input type="date" id="last-cal-date" class="input-field" onchange="updateDuePreview()">
+          </div>
+          <div class="input-group">
+            <label class="field-label" for="cal-interval">Calibration Interval</label>
+            <select id="cal-interval" class="input-field" onchange="handleIntervalChange()">
+              <option value="">Select interval</option>
+              <option value="90">3 months (90 days)</option>
+              <option value="180">6 months (180 days)</option>
+              <option value="365">12 months (365 days)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-group" id="custom-interval-group" style="display:none;">
+          <label class="field-label" for="custom-days">Custom Interval (days)</label>
+          <input type="number" id="custom-days" class="input-field" placeholder="Enter number of days" min="1" oninput="updateDuePreview()">
+        </div>
+        <div class="due-preview empty" id="due-preview">Enter last calibration date to see next due date</div>
+        <div class="btn-row">
+          <button class="skip-link" onclick="completeSetup(true)">Skip for now</button>
+          <button class="btn btn-primary" onclick="completeSetup(false)">Complete Setup ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="register-footer">
+      Already have an account? <a href="login.html">Sign in</a>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentStep = 1;
+
+    function goToStep(step) {
+      // Validate before moving forward
+      if (step > currentStep) {
+        if (!validateStep(currentStep)) return;
+      }
+
+      currentStep = step;
+      // Update step content
+      document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+      document.getElementById(`step-${step}`).classList.add('active');
+
+      // Update progress indicators
+      for (let i = 1; i <= 3; i++) {
+        const ps = document.getElementById(`ps-${i}`);
+        const pc = document.getElementById(`pc-${i}`);
+        ps.classList.remove('active', 'completed');
+        pc.classList.remove('current', 'completed', 'future');
+
+        if (i < step) {
+          ps.classList.add('completed');
+          pc.classList.add('completed');
+          pc.innerHTML = '✓';
+        } else if (i === step) {
+          ps.classList.add('active');
+          pc.classList.add('current');
+          pc.textContent = i;
+        } else {
+          pc.classList.add('future');
+          pc.textContent = i;
+        }
+      }
+
+      // Update progress lines
+      for (let i = 1; i <= 2; i++) {
+        const pl = document.getElementById(`pl-${i}`);
+        pl.classList.toggle('completed', i < step);
+      }
+    }
+
+    function validateStep(step) {
+      clearErrors();
+      let valid = true;
+
+      if (step === 1) {
+        const companyName = document.getElementById('company-name').value.trim();
+        if (!companyName) {
+          showFieldError('company-name'); valid = false;
+        }
+      }
+
+      if (step === 2) {
+        const fullName = document.getElementById('full-name').value.trim();
+        const email = document.getElementById('work-email').value.trim();
+        const password = document.getElementById('reg-password').value;
+        const confirm = document.getElementById('confirm-password').value;
+        const terms = document.getElementById('terms-check').checked;
+
+        if (!fullName) { showFieldError('full-name'); valid = false; }
+        if (!email || !email.includes('@')) { showFieldError('work-email'); valid = false; }
+        if (password.length < 8) { showFieldError('reg-password'); valid = false; }
+        if (password !== confirm) { showFieldError('confirm-password'); valid = false; }
+        if (!terms) { document.getElementById('terms-error').style.display = 'block'; valid = false; }
+      }
+
+      return valid;
+    }
+
+    function showFieldError(id) {
+      const error = document.getElementById(`${id}-error`);
+      const input = document.getElementById(id);
+      if (error) error.style.display = 'block';
+      if (input) input.classList.add('error');
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.field-error').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.input-field').forEach(el => el.classList.remove('error'));
+    }
+
+    function checkPasswordStrength() {
+      const pw = document.getElementById('reg-password').value;
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (/[A-Z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+      const colors = ['#EF4444', '#F59E0B', '#F59E0B', '#10B981'];
+      const labels = ['Weak', 'Fair', 'Good', 'Strong'];
+
+      for (let i = 1; i <= 4; i++) {
+        const seg = document.getElementById(`str-${i}`);
+        seg.style.background = i <= score ? colors[Math.max(0, score - 1)] : 'rgba(255,255,255,0.1)';
+      }
+
+      const text = document.getElementById('strength-text');
+      if (pw.length > 0) {
+        text.textContent = labels[Math.max(0, score - 1)] || 'Weak';
+        text.style.color = colors[Math.max(0, score - 1)] || '#EF4444';
+      } else {
+        text.textContent = '';
+      }
+    }
+
+    function handleIntervalChange() {
+      const val = document.getElementById('cal-interval').value;
+      document.getElementById('custom-interval-group').style.display = val === 'custom' ? 'block' : 'none';
+      updateDuePreview();
+    }
+
+    function updateDuePreview() {
+      const lastCal = document.getElementById('last-cal-date').value;
+      let interval = document.getElementById('cal-interval').value;
+      if (interval === 'custom') interval = document.getElementById('custom-days').value;
+
+      const preview = document.getElementById('due-preview');
+      if (lastCal && interval) {
+        const dueDate = calculateNextDue(lastCal, interval);
+        preview.textContent = `Next Due Date will be: ${formatDateFull(dueDate)}`;
+        preview.classList.remove('empty');
+      } else {
+        preview.textContent = 'Enter last calibration date to see next due date';
+        preview.classList.add('empty');
+      }
+    }
+
+    function completeSetup(skipped) {
+      if (!skipped) {
+        // Optional validation for step 3 fields
+      }
+
+      // Validate steps 1 & 2
+      goToStep(1);
+      if (!validateStep(1)) return;
+      goToStep(2);
+      if (!validateStep(2)) return;
+      goToStep(3);
+
+      // Demo: redirect to dashboard
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Setting up...';
+
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1500);
+    }
+  </script>
+</body>
+</html>

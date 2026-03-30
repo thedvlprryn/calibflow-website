@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — CalibFlow</title>
+  <meta name="description" content="CalibFlow dashboard — at-a-glance compliance status for all your calibration instruments.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* KPI Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 32px; }
+    .kpi-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .kpi-card:hover { border-color: rgba(14,199,199,0.3); transform: translateY(-2px); }
+    .kpi-value { font-family: var(--serif); font-size: 36px; letter-spacing: -1px; color: var(--white); }
+    .kpi-label { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .kpi-change { font-family: var(--mono); font-size: 11px; margin-top: 8px; }
+
+    /* Middle row */
+    .middle-row { display: grid; grid-template-columns: 280px 1fr; gap: 24px; margin-bottom: 32px; }
+    .compliance-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .ring-container { position: relative; width: 180px; height: 180px; margin-bottom: 16px; }
+    .ring-container svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 10; }
+    .ring-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
+    .ring-value-text {
+      position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .ring-pct { font-family: var(--serif); font-size: 48px; color: var(--white); }
+    .ring-pct-sign { font-family: var(--sans); font-size: 18px; color: var(--muted); }
+    .ring-sublabel { font-family: var(--sans); font-size: 13px; color: var(--muted); text-align: center; }
+
+    /* Due this week */
+    .due-week-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .due-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .due-item:last-child { border-bottom: none; }
+    .due-item:hover { background: rgba(255,255,255,0.02); border-radius: 8px; padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; }
+    .due-item-info { flex: 1; }
+    .due-item-name { font-family: var(--sans); font-size: 14px; color: var(--white); font-weight: 500; }
+    .due-item-serial { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+    .due-item-date { font-family: var(--mono); font-size: 11px; color: var(--white); }
+
+    /* Bottom row */
+    .bottom-row { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+    .activity-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .activity-item {
+      display: flex; align-items: flex-start; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+    .activity-text { font-family: var(--sans); font-size: 13px; color: rgba(255,255,255,0.6); flex: 1; }
+    .activity-time { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    /* Quick Actions */
+    .quick-actions {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .quick-action-btn {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-radius: 10px;
+      font-family: var(--sans); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+    }
+    .qa-add { background: linear-gradient(135deg, rgba(30,95,173,0.2), rgba(14,199,199,0.2)); color: var(--white); border: 1px solid rgba(14,199,199,0.2); }
+    .qa-add:hover { background: linear-gradient(135deg, rgba(30,95,173,0.3), rgba(14,199,199,0.3)); color: var(--white); }
+    .qa-overdue { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.2); }
+    .qa-overdue:hover { background: rgba(239,68,68,0.15); color: #F87171; }
+    .qa-report { background: transparent; color: var(--cyan); border: 1px solid rgba(14,199,199,0.3); }
+    .qa-report:hover { background: rgba(14,199,199,0.08); color: var(--cyan); }
+
+    /* Empty due state */
+    .empty-due { text-align: center; padding: 32px; }
+    .empty-due-icon { font-size: 32px; margin-bottom: 8px; }
+    .empty-due-text { font-family: var(--sans); font-size: 14px; color: var(--muted); }
+
+    /* Monitoring indicator */
+    .monitoring { display: flex; align-items: center; gap: 8px; }
+    .monitoring-text { font-family: var(--mono); font-size: 12px; color: var(--cyan); }
+
+    @media (max-width: 1024px) {
+      .kpi-grid { grid-template-columns: repeat(2,1fr); }
+      .middle-row { grid-template-columns: 1fr; }
+      .bottom-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Nav -->
+  <nav class="topnav" id="topnav"></nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- Main Content -->
+  <div class="app-layout">
+    <div class="page-content">
+      <!-- Welcome Banner (shows for new users) -->
+      <div class="welcome-banner" id="welcome-banner" style="display:none;">
+        <p>Welcome to CalibFlow! 🎉 Start by adding your equipment.</p>
+        <button class="dismiss" onclick="dismissWelcome()">✕</button>
+      </div>
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1 class="h1">Dashboard</h1>
+        <div class="monitoring">
+          <div class="pulse-ring"></div>
+          <span class="monitoring-text">Monitoring <span id="device-count">0</span> devices</span>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <!-- Middle Row: Compliance Ring + Due This Week -->
+      <div class="middle-row">
+        <div class="compliance-card">
+          <div class="ring-container">
+            <svg viewBox="0 0 200 200">
+              <circle class="ring-track" cx="100" cy="100" r="85"></circle>
+              <circle class="ring-fill" id="ring-fill" cx="100" cy="100" r="85" stroke-dasharray="0 534"></circle>
+            </svg>
+            <div class="ring-value-text">
+              <div><span class="ring-pct" id="ring-pct">0</span><span class="ring-pct-sign">%</span></div>
+            </div>
+          </div>
+          <div class="ring-sublabel">Overall Compliance</div>
+        </div>
+
+        <div class="due-week-card">
+          <div class="section-label" style="margin-bottom:20px;">DUE THIS WEEK</div>
+          <div id="due-week-list"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Row: Recent Activity + Quick Actions -->
+      <div class="bottom-row">
+        <div class="activity-card">
+          <div class="section-label" style="margin-bottom:20px;">RECENT ACTIVITY</div>
+          <div id="activity-list"></div>
+        </div>
+
+        <div class="quick-actions">
+          <div class="section-label" style="margin-bottom:12px;">QUICK ACTIONS</div>
+          <a href="equipment-add.html" class="quick-action-btn qa-add">➕ Add Device</a>
+          <a href="equipment.html?status=overdue" class="quick-action-btn qa-overdue">🔴 View Overdue</a>
+          <a href="reports.html" class="quick-action-btn qa-report">📊 Generate Report</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Build navigation
+    buildTopNav('Dashboard');
+    buildSidebar('Dashboard');
+
+    // Check if new user (show welcome)
+    const isNew = new URLSearchParams(window.location.search).get('new');
+    if (isNew || !localStorage.getItem('cf_welcomed')) {
+      document.getElementById('welcome-banner').style.display = 'flex';
+    }
+
+    function dismissWelcome() {
+      const banner = document.getElementById('welcome-banner');
+      banner.style.animation = 'slideOut 0.3s ease-in forwards';
+      setTimeout(() => banner.style.display = 'none', 300);
+      localStorage.setItem('cf_welcomed', 'true');
+    }
+
+    // Auto-dismiss after 10s
+    setTimeout(() => {
+      const banner = document.getElementById('welcome-banner');
+      if (banner.style.display !== 'none') dismissWelcome();
+    }, 10000);
+
+    // ── Render Dashboard Data ──
+    function renderDashboard() {
+      const equipment = DEMO_EQUIPMENT;
+      const alerts = DEMO_ALERTS;
+      const active = equipment.filter(e => e.active);
+
+      // Recalculate statuses based on current date
+      active.forEach(e => {
+        const days = daysUntil(e.next_due_date);
+        e._days = days;
+        if (days !== null) {
+          if (days <= 0) e.status = 'overdue';
+          else if (days <= 30) e.status = 'due_soon';
+          else e.status = 'compliant';
+        }
+      });
+
+      const total = active.length;
+      const compliant = active.filter(e => e.status === 'compliant').length;
+      const dueSoon = active.filter(e => e.status === 'due_soon').length;
+      const overdue = active.filter(e => e.status === 'overdue').length;
+
+      document.getElementById('device-count').textContent = total;
+
+      // KPI cards
+      const kpiGrid = document.getElementById('kpi-grid');
+      kpiGrid.innerHTML = `
+        <div class="kpi-card" onclick="location.href='equipment.html'">
+          <div class="kpi-value">${total}</div>
+          <div class="kpi-label">Total Devices</div>
+          <div class="kpi-change" style="color:var(--muted);">→ stable</div>
+        </div>
+        <div class="kpi-card" onclick="location.href='equipment.html?status=compliant'">
+          <div class="kpi-value" style="color:#34D399;">✓ ${compliant}</div>
+          <div class="kpi-label">Compliant</div>
+          <div class="kpi-change" style="color:#34D399;">↑ +2 vs last month</div>
+        </div>
+        <div class="kpi-card" onclick="location.href='equipment.html?status=due_soon'">
+          <div class="kpi-value" style="color:#FBBF24;">⚠ ${dueSoon}</div>
+          <div class="kpi-label">Due Soon</div>
+          <div class="kpi-change" style="color:#FBBF24;">↑ +1 vs last month</div>
+        </div>
+        <div class="kpi-card" onclick="location.href='equipment.html?status=overdue'">
+          <div class="kpi-value" style="color:#F87171;">! ${overdue}</div>
+          <div class="kpi-label">Overdue</div>
+          <div class="kpi-change" style="color:${overdue > 0 ? '#F87171' : '#34D399'};">${overdue > 0 ? '⚠ Requires attention' : '✓ All clear'}</div>
+        </div>
+      `;
+
+      // Compliance Ring
+      const compPct = total > 0 ? Math.round((compliant / total) * 100) : 0;
+      const circumference = 2 * Math.PI * 85; // ~534
+      const fillLength = (compPct / 100) * circumference;
+      const ringFill = document.getElementById('ring-fill');
+      let ringColor = '#10B981';
+      if (compPct < 70) ringColor = '#EF4444';
+      else if (compPct < 90) ringColor = '#F59E0B';
+      ringFill.style.stroke = ringColor;
+      setTimeout(() => {
+        ringFill.setAttribute('stroke-dasharray', `${fillLength} ${circumference}`);
+      }, 100);
+      document.getElementById('ring-pct').textContent = compPct;
+
+      // Due This Week
+      const today = new Date(); today.setHours(0,0,0,0);
+      const weekEnd = new Date(today); weekEnd.setDate(weekEnd.getDate() + 7);
+      const dueThisWeek = active
+        .filter(e => {
+          const d = new Date(e.next_due_date); d.setHours(0,0,0,0);
+          return d >= today && d <= weekEnd;
+        })
+        .sort((a,b) => new Date(a.next_due_date) - new Date(b.next_due_date));
+
+      // Also include all overdue
+      const overdueItems = active.filter(e => e.status === 'overdue');
+
+      const dueList = document.getElementById('due-week-list');
+      const allDue = [...overdueItems, ...dueThisWeek];
+
+      if (allDue.length === 0) {
+        dueList.innerHTML = `
+          <div class="empty-due">
+            <div class="empty-due-icon">🎉</div>
+            <div class="empty-due-text">No calibrations due this week</div>
+          </div>
+        `;
+      } else {
+        dueList.innerHTML = allDue.map(e => `
+          <div class="due-item" onclick="location.href='equipment-detail.html?id=${e.id}'">
+            <div class="due-item-info">
+              <div class="due-item-name">${e.name}</div>
+              <div class="due-item-serial">${e.serial_number}</div>
+            </div>
+            <div class="due-item-date">${formatDate(e.next_due_date)}</div>
+            ${getStatusBadge(e.status)}
+          </div>
+        `).join('');
+      }
+
+      // Recent Activity
+      const activityList = document.getElementById('activity-list');
+      const recentAlerts = alerts.sort((a,b) => new Date(b.sent_at) - new Date(a.sent_at)).slice(0, 8);
+      const alertTypeColors = { '30-day': 'var(--muted)', '7-day': '#FBBF24', '1-day': '#F87171', 'overdue': '#EF4444' };
+
+      activityList.innerHTML = recentAlerts.map(a => `
+        <div class="activity-item" style="cursor:pointer;" onclick="location.href='alerts.html'">
+          <div class="activity-dot" style="background:${alertTypeColors[a.alert_type] || 'var(--muted)'};"></div>
+          <div class="activity-text">${a.alert_type} alert sent to ${a.sent_to.split('@')[0]}@ for ${a.device_name}</div>
+          <div class="activity-time">${timeAgo(a.sent_at)}</div>
+        </div>
+      `).join('');
+    }
+
+    renderDashboard();
+  </script>
+</body>
+</html>

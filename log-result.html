@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log Calibration Results — CalibFlow</title>
+  <meta name="description" content="Log calibration results for an instrument via QR code scan.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: var(--navy); padding: 0; margin: 0; }
+    .mobile-container {
+      max-width: 100vw; min-height: 100vh; padding: 16px;
+      display: flex; flex-direction: column;
+    }
+
+    /* Mobile header */
+    .mobile-header {
+      display: flex; align-items: center; gap: 12px; padding: 8px 0 24px;
+    }
+    .mobile-header .logo-name { font-family: var(--serif); font-size: 20px; color: var(--white); }
+    .mobile-header .logo-name span { color: var(--cyan); }
+
+    /* Device info card */
+    .device-info-card {
+      background: rgba(14,199,199,0.06); border: 1px solid rgba(14,199,199,0.15);
+      border-radius: 12px; padding: 16px; margin-bottom: 24px;
+    }
+    .dic-name { font-family: var(--sans); font-size: 16px; font-weight: 600; color: var(--white); }
+    .dic-serial { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .dic-location { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    /* Form */
+    .mobile-form { flex: 1; }
+    .mobile-form .input-group { margin-bottom: 20px; }
+    .mobile-form .field-label { font-size: 11px; margin-bottom: 6px; }
+    .mobile-form .input-field { font-size: 16px; padding: 14px 16px; }
+
+    /* Readings row */
+    .readings-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+    /* Pass/Fail buttons */
+    .result-row { display: flex; gap: 12px; }
+    .result-btn {
+      width: 48%; flex: 1; padding: 16px; border-radius: 12px;
+      font-family: var(--sans); font-weight: 600; font-size: 16px;
+      text-align: center; cursor: pointer; transition: all 0.2s; border: 2px solid;
+    }
+    .result-btn-pass {
+      background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34D399;
+    }
+    .result-btn-pass.selected {
+      background: rgba(16,185,129,0.2); border-color: #10B981; color: #10B981;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+    }
+    .result-btn-fail {
+      background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #F87171;
+    }
+    .result-btn-fail.selected {
+      background: rgba(239,68,68,0.2); border-color: #EF4444; color: #EF4444;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+    }
+
+    /* Signature pad */
+    .sig-pad {
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; height: 120px;
+      background: rgba(255,255,255,0.03); position: relative; cursor: crosshair;
+      touch-action: none;
+    }
+    .sig-pad canvas { width: 100%; height: 100%; border-radius: 12px; }
+    .sig-placeholder {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-family: var(--sans); font-size: 14px; color: var(--muted); pointer-events: none;
+    }
+    .sig-clear { font-family: var(--mono); font-size: 11px; color: var(--muted); cursor: pointer; margin-top: 4px; background: none; border: none; }
+
+    /* Submit */
+    .submit-btn {
+      width: 100%; padding: 16px; font-size: 16px; margin-top: 24px; margin-bottom: 32px;
+    }
+
+    /* Success screen */
+    .success-screen {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 64px 24px; min-height: 60vh;
+    }
+    .success-screen.active { display: flex; }
+    .success-icon { font-size: 64px; margin-bottom: 24px; }
+    .success-title { font-family: var(--sans); font-size: 20px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+    .success-sub { font-family: var(--sans); font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 32px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Header -->
+    <div class="mobile-header">
+      <svg width="32" height="32" viewBox="0 0 44 44" fill="none">
+        <rect width="44" height="44" rx="11" fill="#1E5FAD"/>
+        <rect width="44" height="44" rx="11" fill="url(#lg-m)" opacity="0.6"/>
+        <path d="M22 8C14.268 8 8 14.268 8 22C8 29.732 14.268 36 22 36C29.732 36 36 29.732 36 22" stroke="#0EC7C7" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="22" cy="22" r="3" fill="#0EC7C7"/>
+        <path d="M22 22L28 16" stroke="#0EC7C7" stroke-width="2" stroke-linecap="round"/>
+        <defs><linearGradient id="lg-m" x1="0" y1="0" x2="44" y2="44"><stop stop-color="#0EC7C7"/><stop offset="1" stop-color="#0EC7C7" stop-opacity="0"/></linearGradient></defs>
+      </svg>
+      <div class="logo-name">Calib<span>Flow</span></div>
+    </div>
+
+    <!-- Device Info -->
+    <div class="device-info-card" id="device-info">
+      <div class="dic-name" id="dic-name">Loading device...</div>
+      <div class="dic-serial" id="dic-serial"></div>
+      <div class="dic-location" id="dic-location"></div>
+    </div>
+
+    <!-- Form -->
+    <div class="mobile-form" id="mobile-form">
+      <div class="input-group">
+        <label class="field-label" for="tech-name">Technician Name *</label>
+        <input type="text" id="tech-name" class="input-field" placeholder="Your full name">
+        <div class="input-error" id="tech-name-error" style="display:none;">Technician name is required</div>
+      </div>
+
+      <div class="input-group">
+        <label class="field-label" for="cal-date">Calibration Date *</label>
+        <input type="date" id="cal-date" class="input-field">
+      </div>
+
+      <div class="input-group">
+        <label class="field-label">Readings</label>
+        <div class="readings-row">
+          <input type="text" class="input-field" id="r1" placeholder="R1" style="text-align:center;">
+          <input type="text" class="input-field" id="r2" placeholder="R2" style="text-align:center;">
+          <input type="text" class="input-field" id="r3" placeholder="R3" style="text-align:center;">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="field-label">Result *</label>
+        <div class="result-row">
+          <button class="result-btn result-btn-pass" id="btn-pass" onclick="selectResult('pass')">✅ PASS</button>
+          <button class="result-btn result-btn-fail" id="btn-fail" onclick="selectResult('fail')">❌ FAIL</button>
+        </div>
+        <div class="input-error" id="result-error" style="display:none;">Please select a result</div>
+      </div>
+
+      <div class="input-group">
+        <label class="field-label" for="observations">Observations</label>
+        <textarea id="observations" class="input-field" rows="3" placeholder="Any notes about this calibration..."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label class="field-label">Signature</label>
+        <div class="sig-pad" id="sig-pad">
+          <canvas id="sig-canvas"></canvas>
+          <div class="sig-placeholder" id="sig-placeholder">✍️ Draw here</div>
+        </div>
+        <button class="sig-clear" onclick="clearSignature()">Clear signature</button>
+      </div>
+
+      <button class="btn btn-primary submit-btn" id="submit-btn" onclick="submitResults()">Submit Results</button>
+    </div>
+
+    <!-- Success Screen -->
+    <div class="success-screen" id="success-screen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Results logged successfully!</div>
+      <div class="success-sub">Certificate will be emailed to your QA manager shortly.</div>
+      <button class="btn btn-ghost" onclick="resetForm()">Log Another</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Get device from URL
+    const eqId = parseInt(new URLSearchParams(window.location.search).get('equipment_id')) || 1;
+    const device = DEMO_EQUIPMENT.find(e => e.id === eqId) || DEMO_EQUIPMENT[0];
+
+    document.getElementById('dic-name').textContent = device.name;
+    document.getElementById('dic-serial').textContent = device.serial_number;
+    document.getElementById('dic-location').textContent = device.location;
+
+    // Set today's date
+    document.getElementById('cal-date').value = new Date().toISOString().split('T')[0];
+
+    // Result selection
+    let selectedResult = null;
+    function selectResult(result) {
+      selectedResult = result;
+      document.getElementById('btn-pass').classList.toggle('selected', result === 'pass');
+      document.getElementById('btn-fail').classList.toggle('selected', result === 'fail');
+      document.getElementById('result-error').style.display = 'none';
+    }
+
+    // Signature Pad
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let hasDrawn = false;
+
+    function resizeCanvas() {
+      const pad = document.getElementById('sig-pad');
+      canvas.width = pad.offsetWidth;
+      canvas.height = pad.offsetHeight;
+      ctx.strokeStyle = '#0EC7C7';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const touch = e.touches ? e.touches[0] : e;
+      return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+    }
+
+    canvas.addEventListener('mousedown', e => { isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', e => { if (!isDrawing) return; hasDrawn = true; document.getElementById('sig-placeholder').style.display = 'none'; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('mouseup', () => isDrawing = false);
+    canvas.addEventListener('mouseleave', () => isDrawing = false);
+
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!isDrawing) return; hasDrawn = true; document.getElementById('sig-placeholder').style.display = 'none'; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+    canvas.addEventListener('touchend', () => isDrawing = false);
+
+    function clearSignature() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hasDrawn = false;
+      document.getElementById('sig-placeholder').style.display = 'flex';
+    }
+
+    // Submit
+    function submitResults() {
+      // Clear errors
+      document.querySelectorAll('.input-error').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.input-field').forEach(el => el.classList.remove('error'));
+
+      let valid = true;
+      const techName = document.getElementById('tech-name').value.trim();
+      const calDate = document.getElementById('cal-date').value;
+
+      if (!techName) {
+        document.getElementById('tech-name-error').style.display = 'block';
+        document.getElementById('tech-name').classList.add('error');
+        valid = false;
+      }
+      if (!selectedResult) {
+        document.getElementById('result-error').style.display = 'block';
+        valid = false;
+      }
+
+      if (!valid) {
+        document.querySelector('.input-field.error, .input-error[style*="block"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+      setTimeout(() => {
+        document.getElementById('mobile-form').style.display = 'none';
+        document.getElementById('success-screen').classList.add('active');
+      }, 1500);
+    }
+
+    function resetForm() {
+      document.getElementById('success-screen').classList.remove('active');
+      document.getElementById('mobile-form').style.display = 'block';
+      document.getElementById('tech-name').value = '';
+      document.getElementById('cal-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('r1').value = '';
+      document.getElementById('r2').value = '';
+      document.getElementById('r3').value = '';
+      document.getElementById('observations').value = '';
+      selectedResult = null;
+      document.getElementById('btn-pass').classList.remove('selected');
+      document.getElementById('btn-fail').classList.remove('selected');
+      clearSignature();
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = false;
+      btn.textContent = 'Submit Results';
+    }
+  </script>
+</body>
+</html>

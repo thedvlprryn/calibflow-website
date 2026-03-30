@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — CalibFlow</title>
+  <meta name="description" content="Sign in to your CalibFlow calibration management dashboard.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: var(--navy); margin: 0; }
+    .login-layout {
+      display: grid;
+      grid-template-columns: 40% 60%;
+      min-height: 100vh;
+    }
+
+    /* Left Panel */
+    .login-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .login-logo .logo-name {
+      font-family: var(--serif);
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      color: var(--white);
+    }
+    .login-logo .logo-name span { color: var(--cyan); }
+    .login-tagline {
+      font-family: var(--serif);
+      font-size: 20px;
+      color: rgba(255,255,255,0.6);
+      font-style: italic;
+      margin-bottom: 32px;
+    }
+    .login-benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .login-benefit {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--sans);
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+    }
+    .login-benefit .check {
+      color: var(--cyan);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* Right Panel */
+    .login-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(4,10,22,0.6);
+      padding: 48px;
+    }
+    .login-form-container {
+      max-width: 400px;
+      width: 100%;
+    }
+    .login-form-container h1 {
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 28px;
+      color: var(--white);
+      margin-bottom: 32px;
+    }
+    .login-form-container .input-group {
+      margin-bottom: 20px;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      background: none;
+      border: none;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .password-toggle:hover { color: var(--cyan); }
+    .forgot-link {
+      display: block;
+      text-align: right;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--cyan);
+      margin-top: 8px;
+      text-decoration: none;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+    .login-error {
+      color: var(--overdue-text);
+      font-family: var(--sans);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .login-error.visible { display: block; }
+    .login-trouble {
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+    }
+    .login-divider {
+      text-align: center;
+      margin-top: 28px;
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .login-register-link {
+      display: block;
+      text-align: center;
+      margin-top: 8px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    .login-register-link:hover { text-decoration: underline; }
+    .field-error {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--overdue-text);
+      margin-top: 4px;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+
+    @media (max-width: 768px) {
+      .login-layout {
+        grid-template-columns: 1fr;
+      }
+      .login-left {
+        padding: 24px;
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+      }
+      .login-benefits { display: none; }
+      .login-tagline { display: none; }
+      .login-right { padding: 32px 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-layout">
+    <!-- Left Panel -->
+    <div class="login-left">
+      <div class="login-logo">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <rect width="44" height="44" rx="11" fill="#1E5FAD"/>
+          <rect width="44" height="44" rx="11" fill="url(#lgrad-login)" opacity="0.6"/>
+          <path d="M22 8C14.268 8 8 14.268 8 22C8 29.732 14.268 36 22 36C29.732 36 36 29.732 36 22" stroke="#0EC7C7" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="22" cy="22" r="3" fill="#0EC7C7"/>
+          <path d="M22 22L28 16" stroke="#0EC7C7" stroke-width="2" stroke-linecap="round"/>
+          <path d="M33 22L36 22" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <path d="M35.5 16L32.7 17.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <path d="M35.5 28L32.7 26.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+          <defs><linearGradient id="lgrad-login" x1="0" y1="0" x2="44" y2="44"><stop stop-color="#0EC7C7"/><stop offset="1" stop-color="#0EC7C7" stop-opacity="0"/></linearGradient></defs>
+        </svg>
+        <div class="logo-name">Calib<span>Flow</span></div>
+      </div>
+      <p class="login-tagline">Calibration, automated.</p>
+      <div class="login-benefits">
+        <div class="login-benefit">
+          <span class="check">✓</span>
+          <span>Never miss a calibration deadline</span>
+        </div>
+        <div class="login-benefit">
+          <span class="check">✓</span>
+          <span>Generate certificates automatically</span>
+        </div>
+        <div class="login-benefit">
+          <span class="check">✓</span>
+          <span>Pass every audit with confidence</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="login-right">
+      <div class="login-form-container anim-fade-in-up">
+        <h1>Sign in to CalibFlow</h1>
+
+        <div id="login-error" class="login-error">
+          Invalid email or password. Please try again.
+        </div>
+        <div id="login-trouble" class="login-trouble">
+          Having trouble? Contact <a href="mailto:support@calibflow.io" style="color:var(--cyan);">support@calibflow.io</a>
+        </div>
+
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="input-group">
+            <label class="field-label" for="login-email">Work Email</label>
+            <input type="email" id="login-email" class="input-field" placeholder="you@company.com" autocomplete="email">
+            <div id="email-error" class="field-error">This field is required</div>
+          </div>
+
+          <div class="input-group">
+            <label class="field-label" for="login-password">Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="login-password" class="input-field" placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Show password">👁</button>
+            </div>
+            <div id="password-error" class="field-error">This field is required</div>
+            <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="login-btn" style="padding:14px;">
+            Sign In
+          </button>
+        </form>
+
+        <div class="login-divider">Don't have an account?</div>
+        <a href="register.html" class="login-register-link">Start Free Trial</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let failCount = 0;
+
+    async function handleLogin(e) {
+      e.preventDefault();
+
+      // Reset errors
+      document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+      document.querySelectorAll('.input-field').forEach(el => el.classList.remove('error'));
+      document.getElementById('login-error').classList.remove('visible');
+
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      let hasError = false;
+
+      if (!email) {
+        document.getElementById('email-error').classList.add('visible');
+        document.getElementById('login-email').classList.add('error');
+        hasError = true;
+      }
+      if (!password) {
+        document.getElementById('password-error').classList.add('visible');
+        document.getElementById('login-password').classList.add('error');
+        hasError = true;
+      }
+      if (hasError) return;
+
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+      // Demo mode — simulate login
+      setTimeout(() => {
+        // For demo: accept any credentials
+        // In production, this would call supabase.auth.signInWithPassword
+        window.location.href = 'dashboard.html';
+      }, 1000);
+    }
+
+    function togglePassword() {
+      const input = document.getElementById('login-password');
+      const btn = document.querySelector('.password-toggle');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        btn.textContent = '👁';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alerts Inbox — CalibFlow</title>
+  <meta name="description" content="Audit trail of every calibration notification — proves compliance.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 32px; }
+    .stat-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 24px;
+    }
+    .stat-value { font-family: var(--serif); font-size: 24px; }
+    .stat-label { font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    .filter-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-row select { width: auto; padding: 6px 32px 6px 12px; font-size: 13px; border-radius: 100px; }
+
+    .al-device { width: 22%; font-weight: 500; color: var(--white); cursor: pointer; }
+    .al-type { width: 12%; }
+    .al-sent-to { width: 18%; font-size: 13px; color: rgba(255,255,255,0.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .al-channel { width: 6%; text-align: center; }
+    .al-status { width: 12%; }
+    .al-date { width: 14%; font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); }
+    .al-confirmed { width: 10%; font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.5); }
+    .al-actions { width: 6%; text-align: right; }
+
+    .badge-sent { background: rgba(143,163,184,0.12); color: var(--muted); border: 1px solid rgba(143,163,184,0.2); }
+    .badge-delivered { background: rgba(58,130,212,0.12); color: var(--blue-light); border: 1px solid rgba(58,130,212,0.2); }
+    .badge-confirmed { background: var(--compliant-bg); color: var(--compliant-text); border: 1px solid var(--compliant-border); }
+    .badge-failed { background: var(--overdue-bg); color: var(--overdue-text); border: 1px solid var(--overdue-border); }
+
+    .type-30 { background: rgba(143,163,184,0.12); color: var(--muted); border: 1px solid rgba(143,163,184,0.2); }
+    .type-7 { background: var(--due-soon-bg); color: var(--due-soon-text); border: 1px solid var(--due-soon-border); }
+    .type-1 { background: var(--overdue-bg); color: var(--overdue-text); border: 1px solid var(--overdue-border); }
+    .type-overdue { background: rgba(180,40,40,0.15); color: #FF6B6B; border: 1px solid rgba(180,40,40,0.25); }
+
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .al-confirmed, .al-channel, .al-status { display: none; }
+      .al-device { width: 30%; }
+      .al-sent-to { width: 25%; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <div class="page-header">
+        <h1 class="h1">Alerts Center</h1>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 Export as CSV</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" id="alert-stats"></div>
+
+      <!-- Filters -->
+      <div class="filter-row">
+        <select class="input-field" id="type-filter" onchange="filterAlerts()">
+          <option value="">All Types</option>
+          <option value="30-day">30-Day</option>
+          <option value="7-day">7-Day</option>
+          <option value="1-day">1-Day</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <select class="input-field" id="status-filter" onchange="filterAlerts()">
+          <option value="">All Statuses</option>
+          <option value="sent">Sent</option>
+          <option value="delivered">Delivered</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="failed">Failed</option>
+        </select>
+        <select class="input-field" id="channel-filter" onchange="filterAlerts()">
+          <option value="">All Channels</option>
+          <option value="email">Email</option>
+          <option value="whatsapp">WhatsApp</option>
+        </select>
+      </div>
+
+      <!-- Search -->
+      <div class="search-input">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="input-field" id="alert-search" placeholder="Search by device name or recipient email..." oninput="filterAlerts()">
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <div class="table-header">
+          <span class="al-device">Device</span>
+          <span class="al-type">Type</span>
+          <span class="al-sent-to">Sent To</span>
+          <span class="al-channel">Ch.</span>
+          <span class="al-status">Status</span>
+          <span class="al-date">Sent</span>
+          <span class="al-confirmed">Confirmed</span>
+          <span class="al-actions">Action</span>
+        </div>
+        <div id="alert-body"></div>
+      </div>
+
+      <div class="pagination" id="alert-pagination"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Alerts');
+    buildSidebar('Alerts');
+
+    let filteredAlerts = [...DEMO_ALERTS];
+
+    function renderStats() {
+      const total = DEMO_ALERTS.length;
+      const confirmed = DEMO_ALERTS.filter(a => a.status === 'confirmed').length;
+      const failed = DEMO_ALERTS.filter(a => a.status === 'failed').length;
+      const confRate = total > 0 ? Math.round((confirmed / total) * 100) : 0;
+
+      let rateColor = '#34D399';
+      if (confRate < 50) rateColor = '#F87171';
+      else if (confRate < 80) rateColor = '#FBBF24';
+
+      document.getElementById('alert-stats').innerHTML = `
+        <div class="stat-card"><div class="stat-value" style="color:var(--white);">${total}</div><div class="stat-label">Total Sent This Month</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:${rateColor};">${confRate}%</div><div class="stat-label">Confirmation Rate</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:${failed > 0 ? '#F87171' : '#34D399'};">${failed}</div><div class="stat-label">Failed Alerts</div></div>
+      `;
+    }
+
+    function filterAlerts() {
+      const search = document.getElementById('alert-search').value.toLowerCase();
+      const type = document.getElementById('type-filter').value;
+      const status = document.getElementById('status-filter').value;
+      const channel = document.getElementById('channel-filter').value;
+
+      filteredAlerts = DEMO_ALERTS.filter(a => {
+        if (search && !a.device_name.toLowerCase().includes(search) && !a.sent_to.toLowerCase().includes(search)) return false;
+        if (type && a.alert_type !== type) return false;
+        if (status && a.status !== status) return false;
+        if (channel && a.channel !== channel) return false;
+        return true;
+      });
+      renderTable();
+    }
+
+    function renderTable() {
+      const body = document.getElementById('alert-body');
+      const typeClasses = { '30-day': 'type-30', '7-day': 'type-7', '1-day': 'type-1', 'overdue': 'type-overdue' };
+      const statusClasses = { sent: 'badge-sent', delivered: 'badge-delivered', confirmed: 'badge-confirmed', failed: 'badge-failed' };
+
+      body.innerHTML = filteredAlerts.sort((a,b) => new Date(b.sent_at) - new Date(a.sent_at)).map(a => `
+        <div class="table-row">
+          <span class="al-device" onclick="location.href='equipment-detail.html?id=${a.equipment_id}'">${a.device_name}</span>
+          <span class="al-type"><span class="badge ${typeClasses[a.alert_type] || 'badge-muted'}" style="font-size:9px;padding:2px 8px;">${a.alert_type.toUpperCase()}</span></span>
+          <span class="al-sent-to">${a.sent_to}</span>
+          <span class="al-channel">${a.channel === 'email' ? '✉️' : '💬'}</span>
+          <span class="al-status"><span class="badge ${statusClasses[a.status]}" style="font-size:9px;padding:2px 8px;">${a.status.toUpperCase()}</span></span>
+          <span class="al-date">${formatDate(a.sent_at)}</span>
+          <span class="al-confirmed">${a.confirmed_at ? formatDate(a.confirmed_at) : '—'}</span>
+          <span class="al-actions"><button class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px;" onclick="resendAlert(${a.id})">Resend</button></span>
+        </div>
+      `).join('');
+    }
+
+    function resendAlert(id) {
+      const alert = DEMO_ALERTS.find(a => a.id === id);
+      if (alert) {
+        showToast(`Alert resent to ${alert.sent_to} ✓`, 'success');
+      }
+    }
+
+    function exportCSV() {
+      showToast('Exporting alerts as CSV...', 'info');
+      // In production: generate and download CSV
+    }
+
+    renderStats();
+    renderTable();
+  </script>
+</body>
+</html>

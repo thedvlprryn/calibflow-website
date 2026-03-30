@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — CalibFlow</title>
+  <meta name="description" content="CalibFlow Privacy Policy — how we collect, use, and protect your data.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: var(--navy); }
+    .legal-nav {
+      position: sticky; top: 0; z-index: 100; height: 72px;
+      background: rgba(11,31,58,0.9); backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; padding: 0 48px;
+    }
+    .legal-nav a {
+      display: flex; align-items: center; gap: 12px; text-decoration: none;
+    }
+    .legal-nav .logo-text { font-family: var(--serif); font-size: 22px; color: var(--white); }
+    .legal-nav .logo-text span { color: var(--cyan); }
+    .legal-container {
+      max-width: 760px; margin: 0 auto; padding: 64px 24px 80px;
+    }
+    .legal-container h1 {
+      font-family: var(--serif); font-size: 36px; color: var(--white); margin-bottom: 8px;
+    }
+    .legal-date {
+      font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 48px;
+    }
+    .legal-container h2 {
+      font-family: var(--sans); font-weight: 600; font-size: 20px; color: var(--white);
+      margin-top: 40px; margin-bottom: 16px;
+    }
+    .legal-container p, .legal-container li {
+      font-family: var(--sans); font-size: 15px; color: rgba(255,255,255,0.65);
+      line-height: 1.8; margin-bottom: 16px;
+    }
+    .legal-container ul { padding-left: 24px; }
+    .legal-container li { margin-bottom: 8px; }
+    .legal-container a { color: var(--cyan); }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px; font-family: var(--sans);
+      font-size: 14px; color: var(--cyan); margin-bottom: 32px;
+    }
+    @media (max-width: 768px) {
+      .legal-nav { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="legal-nav">
+    <a href="index.html">
+      <svg width="36" height="36" viewBox="0 0 44 44" fill="none">
+        <rect width="44" height="44" rx="11" fill="#1E5FAD"/>
+        <rect width="44" height="44" rx="11" fill="url(#lgp)" opacity="0.6"/>
+        <path d="M22 8C14.268 8 8 14.268 8 22C8 29.732 14.268 36 22 36C29.732 36 36 29.732 36 22" stroke="#0EC7C7" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="22" cy="22" r="3" fill="#0EC7C7"/>
+        <path d="M22 22L28 16" stroke="#0EC7C7" stroke-width="2" stroke-linecap="round"/>
+        <defs><linearGradient id="lgp" x1="0" y1="0" x2="44" y2="44"><stop stop-color="#0EC7C7"/><stop offset="1" stop-color="#0EC7C7" stop-opacity="0"/></linearGradient></defs>
+      </svg>
+      <div class="logo-text">Calib<span>Flow</span></div>
+    </a>
+  </nav>
+
+  <div class="legal-container">
+    <a href="index.html" class="back-link">← Back to Home</a>
+    <h1>Privacy Policy</h1>
+    <div class="legal-date">Last updated: March 28, 2026</div>
+
+    <h2>1. Information We Collect</h2>
+    <p>CalibFlow collects information you provide directly when you create an account, register equipment, or contact support. This includes:</p>
+    <ul>
+      <li><strong>Account Information:</strong> Name, email address, company name, phone number, and password</li>
+      <li><strong>Equipment Data:</strong> Device names, serial numbers, calibration dates, intervals, locations, and associated certificates</li>
+      <li><strong>Usage Data:</strong> Pages visited, features used, and interaction timestamps</li>
+      <li><strong>Communications:</strong> Messages sent through our support channels</li>
+    </ul>
+
+    <h2>2. How We Use Your Information</h2>
+    <p>We use the information we collect to:</p>
+    <ul>
+      <li>Provide, maintain, and improve CalibFlow's calibration management services</li>
+      <li>Send calibration deadline alerts via email and/or WhatsApp</li>
+      <li>Generate calibration certificates and compliance reports</li>
+      <li>Communicate with you about your account, updates, and support requests</li>
+      <li>Detect and prevent fraud, abuse, and security incidents</li>
+    </ul>
+
+    <h2>3. Data Security</h2>
+    <p>CalibFlow uses industry-standard security measures to protect your data:</p>
+    <ul>
+      <li><strong>Database:</strong> Supabase (PostgreSQL) with Row Level Security (RLS) — each company's data is completely isolated</li>
+      <li><strong>In Transit:</strong> All data is encrypted using HTTPS/TLS 1.3</li>
+      <li><strong>At Rest:</strong> AES-256 encryption for stored data</li>
+      <li><strong>Access Control:</strong> Role-based access with admin, QA manager, technician, and viewer permissions</li>
+    </ul>
+
+    <h2>4. Data Sharing</h2>
+    <p>We do not sell your personal information. We share data only with:</p>
+    <ul>
+      <li><strong>Service Providers:</strong> Supabase (database), Resend (email delivery), PDFMonkey (certificate generation), Stripe (payments)</li>
+      <li><strong>Calibration Vendors:</strong> Only when you explicitly schedule a calibration through our platform</li>
+      <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
+    </ul>
+
+    <h2>5. Data Retention</h2>
+    <p>We retain your data for the duration of your account's active status. Calibration records and certificates are stored indefinitely to maintain audit compliance. You may request data deletion by contacting <a href="mailto:privacy@calibflow.io">privacy@calibflow.io</a>.</p>
+
+    <h2>6. Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li>Access your personal data</li>
+      <li>Correct inaccurate data</li>
+      <li>Request deletion of your data</li>
+      <li>Export your data in standard formats (CSV, PDF)</li>
+      <li>Withdraw consent for optional communications</li>
+    </ul>
+
+    <h2>7. Cookies</h2>
+    <p>CalibFlow uses essential cookies for authentication and session management. We do not use advertising or third-party tracking cookies.</p>
+
+    <h2>8. Changes to This Policy</h2>
+    <p>We may update this policy from time to time. We will notify you of significant changes by email or through an in-app notification.</p>
+
+    <h2>9. Contact Us</h2>
+    <p>If you have questions about this Privacy Policy, contact us at:<br>
+    <a href="mailto:privacy@calibflow.io">privacy@calibflow.io</a></p>
+  </div>
+</body>
+</html>

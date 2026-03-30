@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Detail — CalibFlow</title>
+  <meta name="description" content="Detailed view of a calibration instrument in CalibFlow.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .detail-header {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 32px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;
+    }
+    .detail-header-left h1 { font-size: 28px; margin-bottom: 4px; }
+    .detail-serial { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+    .detail-actions { display: flex; gap: 8px; }
+
+    .detail-middle { display: grid; grid-template-columns: 200px 1fr; gap: 24px; margin-bottom: 32px; }
+
+    /* Countdown */
+    .countdown-card {
+      border-radius: 16px; padding: 24px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .countdown-card.overdue { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+    .countdown-card.due-soon { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
+    .countdown-card.compliant { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); }
+    .countdown-number { font-family: var(--serif); font-size: 48px; }
+    .countdown-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+    .countdown-due { font-family: var(--mono); font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 8px; }
+
+    /* Info Grid */
+    .info-grid {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 24px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .info-item-label { font-family: var(--mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 4px; }
+    .info-item-value { font-family: var(--sans); font-size: 14px; color: var(--white); }
+
+    /* History table */
+    .history-section { margin-bottom: 32px; }
+    .hist-date { width: 15%; font-family: var(--mono); font-size: 12px; }
+    .hist-result { width: 10%; }
+    .hist-tech { width: 20%; font-size: 13px; }
+    .hist-obs { width: 30%; font-size: 13px; color: rgba(255,255,255,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-cert { width: 15%; font-family: var(--mono); font-size: 12px; color: var(--cyan); cursor: pointer; }
+    .hist-dl { width: 10%; text-align: right; }
+
+    /* Cert + Alert columns */
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .cert-item, .alert-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .cert-item:last-child, .alert-item:last-child { border-bottom: none; }
+
+    /* QR Modal */
+    .qr-preview { background: white; padding: 24px; border-radius: 12px; text-align: center; margin: 16px auto; max-width: 220px; }
+    .qr-preview canvas { width: 100%; }
+    .qr-device-label { font-family: var(--mono); font-size: 11px; color: #333; margin-top: 8px; }
+
+    @media (max-width: 768px) {
+      .detail-middle { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .bottom-grid { grid-template-columns: 1fr; }
+      .detail-header { flex-direction: column; align-items: flex-start; }
+      .hist-obs, .hist-tech { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <div class="breadcrumb">
+        <a href="equipment.html">Equipment Registry</a>
+        <span>›</span>
+        <span id="bc-device">Loading...</span>
+      </div>
+
+      <!-- Device Header -->
+      <div class="detail-header" id="detail-header"></div>
+
+      <!-- Countdown + Info -->
+      <div class="detail-middle" id="detail-middle"></div>
+
+      <!-- Calibration History -->
+      <div class="history-section">
+        <div class="section-label">CALIBRATION HISTORY</div>
+        <div class="table-container">
+          <div class="table-header">
+            <span class="hist-date">Date</span>
+            <span class="hist-result">Result</span>
+            <span class="hist-tech">Technician</span>
+            <span class="hist-obs">Observations</span>
+            <span class="hist-cert">Certificate #</span>
+            <span class="hist-dl">Download</span>
+          </div>
+          <div id="history-body"></div>
+        </div>
+      </div>
+
+      <!-- Certificates + Alert History -->
+      <div class="bottom-grid">
+        <div>
+          <div class="section-label">CERTIFICATES</div>
+          <div class="card" id="cert-list"></div>
+        </div>
+        <div>
+          <div class="section-label">ALERT HISTORY</div>
+          <div class="card" id="alert-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Modal -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal" style="position:relative;text-align:center;max-width:400px;">
+      <button class="modal-close" onclick="closeQRModal()">✕</button>
+      <h2 class="h2" style="margin-bottom:8px;">QR Code</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Scan this code to log calibration results on a mobile device.</p>
+      <div class="qr-preview" id="qr-preview">
+        <div style="width:160px;height:160px;background:#f0f0f0;margin:0 auto;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:48px;">📱</div>
+        <div class="qr-device-label" id="qr-label"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="showToast('QR code sent to printer','success');closeQRModal();">🖨️ Print QR Code</button>
+    </div>
+  </div>
+
+  <!-- Schedule Modal -->
+  <div class="modal-overlay" id="schedule-modal">
+    <div class="modal" style="position:relative;max-width:440px;">
+      <button class="modal-close" onclick="closeScheduleModal()">✕</button>
+      <h2 class="h2" style="margin-bottom:16px;">Schedule Calibration</h2>
+      <div class="input-group">
+        <label class="field-label">Preferred Date</label>
+        <input type="date" class="input-field" id="sched-date">
+      </div>
+      <div class="input-group">
+        <label class="field-label">Vendor</label>
+        <select class="input-field" id="sched-vendor"></select>
+      </div>
+      <div class="input-group">
+        <label class="field-label">Notes</label>
+        <textarea class="input-field" rows="2" placeholder="Any special instructions..."></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+        <button class="btn btn-secondary btn-sm" onclick="closeScheduleModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmSchedule()">Confirm Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Equipment');
+    buildSidebar('Equipment');
+
+    const deviceId = parseInt(new URLSearchParams(window.location.search).get('id')) || 1;
+    const device = DEMO_EQUIPMENT.find(e => e.id === deviceId) || DEMO_EQUIPMENT[0];
+
+    // Recalculate status
+    const days = daysUntil(device.next_due_date);
+    device._days = days;
+    if (days !== null) {
+      if (days <= 0) device.status = 'overdue';
+      else if (days <= 30) device.status = 'due_soon';
+      else device.status = 'compliant';
+    }
+
+    document.getElementById('bc-device').textContent = device.name;
+    document.title = `${device.name} — CalibFlow`;
+
+    // Header
+    document.getElementById('detail-header').innerHTML = `
+      <div class="detail-header-left">
+        <h1 class="h1">${device.name}</h1>
+        <span class="detail-serial">${device.serial_number}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${getStatusBadge(device.status)}
+      </div>
+      <div class="detail-actions">
+        <a href="equipment-add.html?id=${device.id}" class="btn btn-secondary btn-sm">✏️ Edit Device</a>
+        <button class="btn btn-primary btn-sm" onclick="openScheduleModal()">📅 Schedule Calibration</button>
+        <button class="btn btn-ghost btn-sm" onclick="openQRModal()">📱 QR Code</button>
+      </div>
+    `;
+
+    // Countdown + Info
+    let cdClass = 'compliant', cdColor = '#34D399', cdLabel = 'DAYS', cdSub = 'until next calibration';
+    const absDays = Math.abs(days || 0);
+
+    if (device.status === 'overdue') {
+      cdClass = 'overdue'; cdColor = '#F87171'; cdLabel = `OVERDUE BY`; cdSub = `Due: ${formatDate(device.next_due_date)}`;
+    } else if (device.status === 'due_soon') {
+      cdClass = 'due-soon'; cdColor = '#FBBF24';
+    }
+
+    document.getElementById('detail-middle').innerHTML = `
+      <div class="countdown-card ${cdClass}">
+        <div class="countdown-number" style="color:${cdColor}">${absDays}</div>
+        <div class="countdown-label" style="color:${cdColor}">${cdLabel}</div>
+        <div class="countdown-due">${cdSub}</div>
+      </div>
+      <div class="info-grid">
+        <div><div class="info-item-label">Model</div><div class="info-item-value">${device.model || '—'}</div></div>
+        <div><div class="info-item-label">Manufacturer</div><div class="info-item-value">${device.manufacturer || '—'}</div></div>
+        <div><div class="info-item-label">Category</div><div class="info-item-value">${device.category || '—'}</div></div>
+        <div><div class="info-item-label">Location</div><div class="info-item-value">${device.location || '—'}</div></div>
+        <div><div class="info-item-label">Department</div><div class="info-item-value">Quality Control</div></div>
+        <div><div class="info-item-label">Responsible Person</div><div class="info-item-value">${device.responsible || '—'}</div></div>
+        <div><div class="info-item-label">Approved Vendor</div><div class="info-item-value">${device.vendor || '—'}</div></div>
+        <div><div class="info-item-label">Interval</div><div class="info-item-value">${device.calibration_interval_days} days</div></div>
+      </div>
+    `;
+
+    // Calibration History
+    const calibrations = DEMO_CALIBRATIONS.filter(c => c.equipment_id === device.id);
+    const histBody = document.getElementById('history-body');
+    if (calibrations.length === 0) {
+      histBody.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:14px;">No calibration records yet.</div>';
+    } else {
+      histBody.innerHTML = calibrations.map(c => `
+        <div class="table-row">
+          <span class="hist-date">${formatDate(c.calibration_date)}</span>
+          <span class="hist-result">${c.result === 'pass'
+            ? '<span class="badge badge-compliant"><span class="badge-dot"></span>PASS</span>'
+            : '<span class="badge badge-overdue"><span class="badge-dot"></span>FAIL</span>'}</span>
+          <span class="hist-tech">${c.technician}</span>
+          <span class="hist-obs">${c.observations || '—'}</span>
+          <span class="hist-cert">${c.cert_number}</span>
+          <span class="hist-dl"><button class="action-icon" title="Download Certificate">⬇️</button></span>
+        </div>
+      `).join('');
+    }
+
+    // Certificates
+    const certs = DEMO_CERTIFICATES.filter(c => c.equipment_id === device.id);
+    const certList = document.getElementById('cert-list');
+    if (certs.length === 0) {
+      certList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px;">No certificates yet.</div>';
+    } else {
+      certList.innerHTML = certs.map(c => `
+        <div class="cert-item">
+          <div style="flex:1;">
+            <div style="font-family:var(--mono);font-size:12px;color:var(--white);">${c.cert_number}</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--muted);">${formatDate(c.calibration_date)}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm">Download PDF</button>
+        </div>
+      `).join('');
+    }
+
+    // Alert History
+    const deviceAlerts = DEMO_ALERTS.filter(a => a.equipment_id === device.id).slice(0, 10);
+    const alertList = document.getElementById('alert-list');
+    if (deviceAlerts.length === 0) {
+      alertList.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:13px;">No alerts sent yet.</div>';
+    } else {
+      alertList.innerHTML = deviceAlerts.map(a => {
+        const typeColors = { '30-day': 'badge-muted', '7-day': 'badge-due-soon', '1-day': 'badge-overdue', 'overdue': 'badge-overdue' };
+        return `
+          <div class="alert-item">
+            <span class="badge ${typeColors[a.alert_type] || 'badge-muted'}" style="font-size:9px;padding:2px 8px;">${a.alert_type.toUpperCase()}</span>
+            <span style="flex:1;font-size:13px;color:rgba(255,255,255,0.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.sent_to}</span>
+            <span style="font-size:14px;">${a.channel === 'email' ? '✉️' : '💬'}</span>
+            <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">${formatDate(a.sent_at)}</span>
+          </div>
+        `;
+      }).join('') + `<a href="alerts.html?device=${device.id}" style="display:block;text-align:center;font-family:var(--sans);font-size:13px;color:var(--cyan);padding:12px;margin-top:4px;">View all alerts →</a>`;
+    }
+
+    // QR Modal
+    function openQRModal() {
+      document.getElementById('qr-modal').classList.add('active');
+      document.getElementById('qr-label').textContent = `${device.name} · ${device.serial_number}`;
+    }
+    function closeQRModal() { document.getElementById('qr-modal').classList.remove('active'); }
+
+    // Schedule Modal
+    function openScheduleModal() {
+      document.getElementById('schedule-modal').classList.add('active');
+      const vendorSel = document.getElementById('sched-vendor');
+      vendorSel.innerHTML = '<option value="">Select vendor</option>';
+      DEMO_VENDORS.forEach(v => vendorSel.innerHTML += `<option>${v.name}</option>`);
+    }
+    function closeScheduleModal() { document.getElementById('schedule-modal').classList.remove('active'); }
+    function confirmSchedule() {
+      showToast('Calibration scheduled successfully ✓', 'success');
+      closeScheduleModal();
+    }
+  </script>
+</body>
+</html>

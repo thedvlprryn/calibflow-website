@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Equipment — CalibFlow</title>
+  <meta name="description" content="Add or edit calibration equipment in CalibFlow.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .form-card {
+      max-width: 640px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 40px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .due-preview {
+      background: rgba(14,199,199,0.06);
+      border: 1px solid rgba(14,199,199,0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--cyan);
+      margin-top: 8px;
+    }
+    .due-preview.empty { color: var(--muted); }
+    .form-actions {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 32px;
+    }
+    .dropdown-add-btn {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .add-inline-btn {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(14,199,199,0.1); border: 1px solid rgba(14,199,199,0.2);
+      color: var(--cyan); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
+    }
+    .add-inline-btn:hover { background: rgba(14,199,199,0.2); }
+
+    /* Inline add modal */
+    .inline-add-form {
+      background: rgba(11,31,58,0.95);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 8px;
+      display: none;
+    }
+    .inline-add-form.active { display: block; animation: fadeInUp 0.2s ease-out; }
+    .inline-add-form .inline-row { display: flex; gap: 8px; margin-top: 8px; }
+
+    @media (max-width: 600px) {
+      .form-card { padding: 24px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <div class="breadcrumb">
+        <a href="equipment.html">Equipment Registry</a>
+        <span>›</span>
+        <span id="breadcrumb-current">Add New Equipment</span>
+      </div>
+
+      <div class="form-card anim-fade-in-up">
+        <h1 class="h1" id="form-title" style="margin-bottom:32px;">Add New Equipment</h1>
+
+        <form id="equipment-form" onsubmit="handleSave(event)">
+          <!-- Row 1: Name + Serial -->
+          <div class="form-row">
+            <div class="input-group">
+              <label class="field-label" for="eq-name">Device Name *</label>
+              <input type="text" id="eq-name" class="input-field" placeholder="e.g., Pressure Gauge PG-100">
+              <div class="input-error" id="eq-name-error" style="display:none;">Device name is required (min 2 chars)</div>
+            </div>
+            <div class="input-group">
+              <label class="field-label" for="eq-serial">Serial Number *</label>
+              <input type="text" id="eq-serial" class="input-field" placeholder="e.g., SN-2024-00142" style="font-family:var(--mono);">
+              <div class="input-error" id="eq-serial-error" style="display:none;">Serial number is required</div>
+            </div>
+          </div>
+
+          <!-- Row 2: Model + Manufacturer -->
+          <div class="form-row">
+            <div class="input-group">
+              <label class="field-label" for="eq-model">Model</label>
+              <input type="text" id="eq-model" class="input-field" placeholder="e.g., XYZ-500">
+            </div>
+            <div class="input-group">
+              <label class="field-label" for="eq-manufacturer">Manufacturer</label>
+              <input type="text" id="eq-manufacturer" class="input-field" placeholder="e.g., Acme Corp">
+            </div>
+          </div>
+
+          <!-- Row 3: Category + Location -->
+          <div class="form-row">
+            <div class="input-group">
+              <label class="field-label" for="eq-category">Category</label>
+              <select id="eq-category" class="input-field">
+                <option value="">Select category</option>
+                <option>Pressure</option>
+                <option>Temperature</option>
+                <option>Electrical</option>
+                <option>Weight</option>
+                <option>Flow</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="field-label" for="eq-location">Location</label>
+              <div class="dropdown-add-btn">
+                <select id="eq-location" class="input-field" style="flex:1;"></select>
+                <button type="button" class="add-inline-btn" onclick="toggleInlineForm('location')">+</button>
+              </div>
+              <div class="inline-add-form" id="inline-location">
+                <label class="field-label">Add Location</label>
+                <input type="text" class="input-field" id="new-loc-name" placeholder="Location name" style="margin-bottom:8px;">
+                <input type="text" class="input-field" id="new-loc-building" placeholder="Building (optional)">
+                <div class="inline-row">
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="toggleInlineForm('location')">Cancel</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="addInlineLocation()">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 4: Responsible + Vendor -->
+          <div class="form-row">
+            <div class="input-group">
+              <label class="field-label" for="eq-responsible">Responsible Person</label>
+              <select id="eq-responsible" class="input-field">
+                <option value="">Select person</option>
+                <option>John Smith</option>
+                <option>Maria Lee</option>
+                <option>Ahmed Hassan</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="field-label" for="eq-vendor">Vendor</label>
+              <div class="dropdown-add-btn">
+                <select id="eq-vendor" class="input-field" style="flex:1;"></select>
+                <button type="button" class="add-inline-btn" onclick="toggleInlineForm('vendor')">+</button>
+              </div>
+              <div class="inline-add-form" id="inline-vendor">
+                <label class="field-label">Add Vendor</label>
+                <input type="text" class="input-field" id="new-vendor-name" placeholder="Vendor name *" style="margin-bottom:8px;">
+                <input type="email" class="input-field" id="new-vendor-email" placeholder="Email *" style="margin-bottom:8px;">
+                <input type="tel" class="input-field" id="new-vendor-phone" placeholder="Phone">
+                <div class="inline-row">
+                  <button type="button" class="btn btn-ghost btn-sm" onclick="toggleInlineForm('vendor')">Cancel</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="addInlineVendor()">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 5: Last Cal + Interval -->
+          <div class="form-row">
+            <div class="input-group">
+              <label class="field-label" for="eq-lastcal">Last Calibration Date</label>
+              <input type="date" id="eq-lastcal" class="input-field" onchange="updatePreview()">
+            </div>
+            <div class="input-group">
+              <label class="field-label" for="eq-interval">Calibration Interval (days) *</label>
+              <input type="number" id="eq-interval" class="input-field" placeholder="e.g., 180" min="1" oninput="updatePreview()">
+              <div class="input-error" id="eq-interval-error" style="display:none;">Interval must be greater than 0</div>
+            </div>
+          </div>
+
+          <!-- Due Date Preview -->
+          <div class="due-preview empty" id="due-preview">Enter last calibration date to see next due date</div>
+
+          <!-- Notes -->
+          <div class="input-group" style="margin-top:24px;">
+            <label class="field-label" for="eq-notes">Notes</label>
+            <textarea id="eq-notes" class="input-field" rows="3" placeholder="Any additional notes about this device..."></textarea>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <a href="equipment.html" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary" id="save-btn">Save Device</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Equipment');
+    buildSidebar('Equipment');
+
+    // Populate Location dropdown
+    const locSelect = document.getElementById('eq-location');
+    locSelect.innerHTML = '<option value="">Select location</option>';
+    DEMO_LOCATIONS.forEach(l => {
+      locSelect.innerHTML += `<option value="${l.id}">${l.name} — ${l.building}</option>`;
+    });
+
+    // Populate Vendor dropdown
+    const vendorSelect = document.getElementById('eq-vendor');
+    vendorSelect.innerHTML = '<option value="">Select vendor</option>';
+    DEMO_VENDORS.forEach(v => {
+      vendorSelect.innerHTML += `<option value="${v.id}">${v.name}</option>`;
+    });
+
+    // Check if Edit mode
+    const urlId = new URLSearchParams(window.location.search).get('id');
+    if (urlId) {
+      const device = DEMO_EQUIPMENT.find(e => e.id === parseInt(urlId));
+      if (device) {
+        document.getElementById('form-title').textContent = `Edit: ${device.name}`;
+        document.getElementById('breadcrumb-current').textContent = device.name;
+        document.title = `Edit ${device.name} — CalibFlow`;
+
+        document.getElementById('eq-name').value = device.name;
+        document.getElementById('eq-serial').value = device.serial_number;
+        document.getElementById('eq-model').value = device.model || '';
+        document.getElementById('eq-manufacturer').value = device.manufacturer || '';
+        document.getElementById('eq-category').value = device.category || '';
+        document.getElementById('eq-location').value = device.location_id || '';
+        document.getElementById('eq-lastcal').value = device.last_calibration_date || '';
+        document.getElementById('eq-interval').value = device.calibration_interval_days || '';
+        updatePreview();
+      }
+    }
+
+    function updatePreview() {
+      const lastCal = document.getElementById('eq-lastcal').value;
+      const interval = document.getElementById('eq-interval').value;
+      const preview = document.getElementById('due-preview');
+
+      if (lastCal && interval && parseInt(interval) > 0) {
+        const dueDate = calculateNextDue(lastCal, interval);
+        preview.textContent = `Next Due Date will be: ${formatDateFull(dueDate)}`;
+        preview.classList.remove('empty');
+      } else {
+        preview.textContent = 'Enter last calibration date to see next due date';
+        preview.classList.add('empty');
+      }
+    }
+
+    function toggleInlineForm(type) {
+      const form = document.getElementById(`inline-${type}`);
+      form.classList.toggle('active');
+    }
+
+    function addInlineLocation() {
+      const name = document.getElementById('new-loc-name').value.trim();
+      if (!name) { showToast('Location name is required', 'error'); return; }
+      const building = document.getElementById('new-loc-building').value.trim();
+      const newId = DEMO_LOCATIONS.length + 1;
+      DEMO_LOCATIONS.push({ id: newId, name, building });
+
+      const opt = document.createElement('option');
+      opt.value = newId;
+      opt.textContent = `${name}${building ? ' — ' + building : ''}`;
+      opt.selected = true;
+      locSelect.appendChild(opt);
+
+      toggleInlineForm('location');
+      showToast(`Location "${name}" added`, 'success');
+    }
+
+    function addInlineVendor() {
+      const name = document.getElementById('new-vendor-name').value.trim();
+      const email = document.getElementById('new-vendor-email').value.trim();
+      if (!name || !email) { showToast('Name and email are required', 'error'); return; }
+
+      const newId = DEMO_VENDORS.length + 1;
+      DEMO_VENDORS.push({ id: newId, name, email, phone: document.getElementById('new-vendor-phone').value, active: true });
+
+      const opt = document.createElement('option');
+      opt.value = newId;
+      opt.textContent = name;
+      opt.selected = true;
+      vendorSelect.appendChild(opt);
+
+      toggleInlineForm('vendor');
+      showToast(`Vendor "${name}" added`, 'success');
+    }
+
+    function handleSave(e) {
+      e.preventDefault();
+
+      // Clear errors
+      document.querySelectorAll('.input-error').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.input-field').forEach(el => el.classList.remove('error'));
+
+      let valid = true;
+      const name = document.getElementById('eq-name').value.trim();
+      const serial = document.getElementById('eq-serial').value.trim();
+      const interval = document.getElementById('eq-interval').value;
+
+      if (!name || name.length < 2) {
+        document.getElementById('eq-name-error').style.display = 'block';
+        document.getElementById('eq-name').classList.add('error');
+        valid = false;
+      }
+      if (!serial) {
+        document.getElementById('eq-serial-error').style.display = 'block';
+        document.getElementById('eq-serial').classList.add('error');
+        valid = false;
+      }
+      if (!interval || parseInt(interval) <= 0) {
+        document.getElementById('eq-interval-error').style.display = 'block';
+        document.getElementById('eq-interval').classList.add('error');
+        valid = false;
+      }
+
+      if (!valid) {
+        document.querySelector('.input-field.error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const btn = document.getElementById('save-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+      setTimeout(() => {
+        const msg = urlId ? 'Device updated successfully ✓' : 'Device added successfully ✓';
+        showToast(msg, 'success');
+        setTimeout(() => {
+          window.location.href = urlId ? `equipment-detail.html?id=${urlId}` : 'equipment.html';
+        }, 800);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

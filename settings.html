@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — CalibFlow</title>
+  <meta name="description" content="Manage your CalibFlow company settings, users, vendors, and billing.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .tab-content { display: none; animation: fadeInUp 0.3s ease-out; }
+    .tab-content.active { display: block; }
+    .settings-section { max-width: 700px; }
+
+    /* Logo upload */
+    .logo-upload-area {
+      display: flex; align-items: center; gap: 24px; margin-bottom: 24px;
+    }
+    .current-logo {
+      width: 80px; height: 80px; border-radius: 16px; background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center;
+      justify-content: center; font-size: 32px; overflow: hidden;
+    }
+    .logo-note { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 8px; }
+
+    /* User table */
+    .user-role { width: auto; padding: 6px 32px 6px 12px; font-size: 13px; border-radius: 8px; }
+    .user-status { display: inline-flex; align-items: center; gap: 6px; }
+    .active-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; }
+    .remove-link { font-family: var(--sans); font-size: 13px; color: #F87171; cursor: pointer; background: none; border: none; }
+    .remove-link:hover { text-decoration: underline; }
+
+    /* Toggle rows */
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .toggle-info h3 { font-family: var(--sans); font-size: 15px; color: var(--white); margin-bottom: 2px; }
+    .toggle-info p { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+
+    /* Checkbox rows */
+    .checkbox-row { padding: 10px 0; }
+
+    /* Plan card */
+    .plan-card {
+      background: rgba(14,199,199,0.06); border: 1px solid rgba(14,199,199,0.2);
+      border-radius: 16px; padding: 32px; margin-bottom: 24px;
+    }
+    .plan-name { font-family: var(--serif); font-size: 24px; color: var(--white); margin-bottom: 4px; }
+    .plan-price-detail { font-family: var(--serif); font-size: 36px; color: var(--white); }
+    .plan-price-detail .period { font-family: var(--sans); font-size: 16px; color: var(--muted); }
+    .plan-features-list { margin-top: 16px; }
+    .plan-features-list li {
+      font-family: var(--sans); font-size: 14px; color: rgba(255,255,255,0.6);
+      padding: 4px 0; display: flex; align-items: center; gap: 8px;
+    }
+    .plan-features-list li::before { content: '✓'; color: var(--cyan); font-weight: 700; }
+    .billing-info {
+      font-family: var(--mono); font-size: 13px; color: var(--muted); margin-bottom: 16px;
+    }
+
+    /* Invoice table */
+    .inv-date { width: 30%; font-family: var(--mono); font-size: 12px; }
+    .inv-amount { width: 25%; font-family: var(--mono); font-size: 13px; color: var(--white); }
+    .inv-status { width: 25%; }
+    .inv-dl { width: 20%; text-align: right; }
+
+    /* Vendor/location tables */
+    .tbl-name { width: 25%; font-weight: 500; color: var(--white); }
+    .tbl-email { width: 25%; font-size: 13px; color: rgba(255,255,255,0.6); }
+    .tbl-phone { width: 20%; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.6); }
+    .tbl-spec { width: 15%; font-size: 13px; color: rgba(255,255,255,0.5); }
+    .tbl-active { width: 10%; }
+    .tbl-actions { width: 5%; text-align: right; }
+
+    @media (max-width: 768px) {
+      .tabs { overflow-x: auto; flex-wrap: nowrap; }
+      .tab { white-space: nowrap; font-size: 13px; padding: 10px 14px; }
+      .logo-upload-area { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav" id="topnav"></nav>
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="app-layout">
+    <div class="page-content">
+      <div class="page-header">
+        <h1 class="h1">Settings</h1>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('company')">Company</div>
+        <div class="tab" onclick="switchTab('users')">Users & Roles</div>
+        <div class="tab" onclick="switchTab('notifications')">Notifications</div>
+        <div class="tab" onclick="switchTab('vendors')">Vendors</div>
+        <div class="tab" onclick="switchTab('locations')">Locations</div>
+        <div class="tab" onclick="switchTab('billing')">Billing</div>
+      </div>
+
+      <!-- Tab 1: Company -->
+      <div class="tab-content active" id="tab-company">
+        <div class="settings-section">
+          <div class="input-group">
+            <label class="field-label">Company Name</label>
+            <input type="text" class="input-field" id="company-name" value="Acme Testing Labs">
+          </div>
+          <div class="input-group">
+            <label class="field-label">Company Address</label>
+            <textarea class="input-field" rows="3" id="company-address">123 Lab Street, Suite 400, Science Park, CA 90210</textarea>
+          </div>
+          <div class="input-group">
+            <label class="field-label">Company Logo</label>
+            <div class="logo-upload-area">
+              <div class="current-logo" id="current-logo">🏢</div>
+              <div>
+                <div class="drop-zone" style="padding:16px;border-radius:12px;" onclick="document.getElementById('logo-file').click()">
+                  <p style="font-size:13px;">📁 Drag your logo here or click to browse</p>
+                  <input type="file" id="logo-file" accept=".png,.jpg,.svg" style="display:none;">
+                </div>
+                <div class="logo-note">This logo appears on all generated calibration certificates</div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('Company settings saved ✓','success')">Save Changes</button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Users -->
+      <div class="tab-content" id="tab-users">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" onclick="openInviteModal()">+ Invite New User</button>
+        </div>
+        <div class="table-container">
+          <div class="table-header">
+            <span style="width:25%;">Full Name</span>
+            <span style="width:25%;">Email</span>
+            <span style="width:20%;">Role</span>
+            <span style="width:15%;">Status</span>
+            <span style="width:15%;text-align:right;">Actions</span>
+          </div>
+          <div id="users-body"></div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Notifications -->
+      <div class="tab-content" id="tab-notifications">
+        <div class="settings-section">
+          <h2 class="h2" style="margin-bottom:24px;">Alert Channels</h2>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <h3>Email Alerts</h3>
+              <p>Send calibration alerts via email</p>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <h3>WhatsApp Alerts</h3>
+              <p>Send calibration alerts via WhatsApp</p>
+            </div>
+            <div class="toggle" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div class="toggle-row" style="border-bottom:none;">
+            <div class="toggle-info">
+              <h3>Weekly Digest</h3>
+              <p>Receive a weekly compliance summary every Monday</p>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+
+          <h2 class="h2" style="margin:32px 0 16px;">Alert Windows</h2>
+          <div class="checkbox-row">
+            <label class="checkbox-custom"><input type="checkbox" checked><span class="checkmark"></span>30 days before deadline</label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox-custom"><input type="checkbox" checked><span class="checkmark"></span>7 days before deadline</label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox-custom"><input type="checkbox" checked><span class="checkmark"></span>1 day before deadline</label>
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox-custom"><input type="checkbox" checked><span class="checkmark"></span>Overdue alerts</label>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top:24px;" onclick="showToast('Notification preferences saved ✓','success')">Save Preferences</button>
+        </div>
+      </div>
+
+      <!-- Tab 4: Vendors -->
+      <div class="tab-content" id="tab-vendors">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" onclick="openVendorModal()">+ Add Vendor</button>
+        </div>
+        <div class="table-container">
+          <div class="table-header">
+            <span class="tbl-name">Name</span>
+            <span class="tbl-email">Email</span>
+            <span class="tbl-phone">Phone</span>
+            <span class="tbl-spec">Specialty</span>
+            <span class="tbl-active">Active</span>
+            <span class="tbl-actions">Edit</span>
+          </div>
+          <div id="vendors-body"></div>
+        </div>
+      </div>
+
+      <!-- Tab 5: Locations -->
+      <div class="tab-content" id="tab-locations">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+          <button class="btn btn-primary btn-sm" onclick="openLocationModal()">+ Add Location</button>
+        </div>
+        <div class="table-container">
+          <div class="table-header">
+            <span style="width:30%;">Name</span>
+            <span style="width:30%;">Building</span>
+            <span style="width:25%;">Equipment Count</span>
+            <span style="width:15%;text-align:right;">Actions</span>
+          </div>
+          <div id="locations-body"></div>
+        </div>
+      </div>
+
+      <!-- Tab 6: Billing -->
+      <div class="tab-content" id="tab-billing">
+        <div class="plan-card">
+          <div class="plan-name">Pro Plan</div>
+          <div class="plan-price-detail">$349<span class="period">/mo</span></div>
+          <ul class="plan-features-list">
+            <li>Up to 300 devices</li>
+            <li>10 users</li>
+            <li>5 sites</li>
+            <li>Email + WhatsApp alerts</li>
+            <li>Vendor scheduling</li>
+            <li>All report types</li>
+            <li>Priority support</li>
+          </ul>
+        </div>
+        <div class="billing-info">Next billing date: April 1, 2026</div>
+        <div class="flex gap-12" style="margin-bottom:32px;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Redirecting to Stripe...','info')">Upgrade Plan</button>
+          <button class="btn btn-secondary btn-sm" onclick="showToast('Redirecting to Stripe...','info')">Change Payment Method</button>
+        </div>
+
+        <div class="section-label">INVOICE HISTORY</div>
+        <div class="table-container">
+          <div class="table-header">
+            <span class="inv-date">Date</span>
+            <span class="inv-amount">Amount</span>
+            <span class="inv-status">Status</span>
+            <span class="inv-dl">Download</span>
+          </div>
+          <div id="invoices-body"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invite Modal -->
+  <div class="modal-overlay" id="invite-modal">
+    <div class="modal" style="position:relative;max-width:400px;">
+      <button class="modal-close" onclick="closeModal('invite-modal')">✕</button>
+      <h2 class="h2" style="margin-bottom:16px;">Invite New User</h2>
+      <div class="input-group">
+        <label class="field-label">Email Address</label>
+        <input type="email" class="input-field" id="invite-email" placeholder="colleague@company.com">
+      </div>
+      <div class="input-group">
+        <label class="field-label">Role</label>
+        <select class="input-field" id="invite-role">
+          <option>technician</option>
+          <option>qa_manager</option>
+          <option>admin</option>
+          <option>viewer</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="sendInvite()">Send Invite</button>
+    </div>
+  </div>
+
+  <!-- Vendor Modal -->
+  <div class="modal-overlay" id="vendor-modal">
+    <div class="modal" style="position:relative;max-width:400px;">
+      <button class="modal-close" onclick="closeModal('vendor-modal')">✕</button>
+      <h2 class="h2" style="margin-bottom:16px;">Add Vendor</h2>
+      <div class="input-group">
+        <label class="field-label">Name *</label>
+        <input type="text" class="input-field" id="vendor-name" placeholder="Vendor name">
+      </div>
+      <div class="input-group">
+        <label class="field-label">Email *</label>
+        <input type="email" class="input-field" id="vendor-email" placeholder="vendor@company.com">
+      </div>
+      <div class="input-group">
+        <label class="field-label">Phone</label>
+        <input type="tel" class="input-field" id="vendor-phone" placeholder="+1 555 0100">
+      </div>
+      <div class="input-group">
+        <label class="field-label">Specialty</label>
+        <input type="text" class="input-field" id="vendor-specialty" placeholder="e.g., Pressure, Electrical">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="addVendor()">Add Vendor</button>
+    </div>
+  </div>
+
+  <!-- Location Modal -->
+  <div class="modal-overlay" id="location-modal">
+    <div class="modal" style="position:relative;max-width:400px;">
+      <button class="modal-close" onclick="closeModal('location-modal')">✕</button>
+      <h2 class="h2" style="margin-bottom:16px;">Add Location</h2>
+      <div class="input-group">
+        <label class="field-label">Name *</label>
+        <input type="text" class="input-field" id="loc-name" placeholder="Location name">
+      </div>
+      <div class="input-group">
+        <label class="field-label">Building</label>
+        <input type="text" class="input-field" id="loc-building" placeholder="Building name">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="addLocation()">Add Location</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    buildTopNav('Settings');
+    buildSidebar('Settings');
+
+    // Tab switching
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(`tab-${name}`).classList.add('active');
+    }
+
+    // Users
+    const users = [
+      { name: 'John Smith', email: 'john@company.com', role: 'admin', active: true },
+      { name: 'Maria Lee', email: 'maria@company.com', role: 'qa_manager', active: true },
+      { name: 'Ahmed Hassan', email: 'ahmed@company.com', role: 'technician', active: true },
+    ];
+
+    function renderUsers() {
+      document.getElementById('users-body').innerHTML = users.map((u, i) => `
+        <div class="table-row">
+          <span style="width:25%;font-weight:500;color:var(--white);">${u.name}</span>
+          <span style="width:25%;font-size:13px;color:rgba(255,255,255,0.6);">${u.email}</span>
+          <span style="width:20%;">
+            <select class="input-field user-role" onchange="changeRole(${i}, this.value)" style="background:rgba(255,255,255,0.05);">
+              <option ${u.role==='admin'?'selected':''}>admin</option>
+              <option ${u.role==='qa_manager'?'selected':''}>qa_manager</option>
+              <option ${u.role==='technician'?'selected':''}>technician</option>
+              <option ${u.role==='viewer'?'selected':''}>viewer</option>
+            </select>
+          </span>
+          <span style="width:15%;"><span class="user-status"><span class="active-dot"></span> Active</span></span>
+          <span style="width:15%;text-align:right;"><button class="remove-link" onclick="removeUser(${i})">Remove</button></span>
+        </div>
+      `).join('');
+    }
+
+    function changeRole(index, role) {
+      users[index].role = role;
+      showToast(`Role updated for ${users[index].name} ✓`, 'success');
+    }
+
+    function removeUser(index) {
+      if (confirm(`Remove ${users[index].name}?`)) {
+        const name = users[index].name;
+        users.splice(index, 1);
+        renderUsers();
+        showToast(`${name} removed`, 'success');
+      }
+    }
+
+    // Vendors
+    function renderVendors() {
+      document.getElementById('vendors-body').innerHTML = DEMO_VENDORS.map((v, i) => `
+        <div class="table-row">
+          <span class="tbl-name">${v.name}</span>
+          <span class="tbl-email">${v.email}</span>
+          <span class="tbl-phone">${v.phone}</span>
+          <span class="tbl-spec">${v.specialty || '—'}</span>
+          <span class="tbl-active"><div class="toggle ${v.active ? 'active' : ''}" onclick="this.classList.toggle('active');DEMO_VENDORS[${i}].active=!DEMO_VENDORS[${i}].active;"></div></span>
+          <span class="tbl-actions"><button class="action-icon">✏️</button></span>
+        </div>
+      `).join('');
+    }
+
+    // Locations
+    function renderLocations() {
+      document.getElementById('locations-body').innerHTML = DEMO_LOCATIONS.map((l, i) => {
+        const count = DEMO_EQUIPMENT.filter(e => e.location_id === l.id).length;
+        return `
+          <div class="table-row">
+            <span style="width:30%;font-weight:500;color:var(--white);">${l.name}</span>
+            <span style="width:30%;font-size:13px;color:rgba(255,255,255,0.6);">${l.building || '—'}</span>
+            <span style="width:25%;font-family:var(--mono);font-size:12px;color:var(--muted);">${count} devices</span>
+            <span style="width:15%;text-align:right;">
+              ${count === 0 ? '<button class="remove-link" onclick="deleteLocation(' + i + ')">Delete</button>' : '<span style="font-size:12px;color:var(--muted);">—</span>'}
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function deleteLocation(index) {
+      const name = DEMO_LOCATIONS[index].name;
+      DEMO_LOCATIONS.splice(index, 1);
+      renderLocations();
+      showToast(`Location "${name}" deleted`, 'success');
+    }
+
+    // Invoices
+    const invoices = [
+      { date: '2026-03-01', amount: '$349.00', status: 'paid' },
+      { date: '2026-02-01', amount: '$349.00', status: 'paid' },
+      { date: '2026-01-01', amount: '$349.00', status: 'paid' },
+      { date: '2025-12-01', amount: '$349.00', status: 'paid' },
+    ];
+
+    function renderInvoices() {
+      document.getElementById('invoices-body').innerHTML = invoices.map(inv => `
+        <div class="table-row">
+          <span class="inv-date">${formatDateFull(inv.date)}</span>
+          <span class="inv-amount">${inv.amount}</span>
+          <span class="inv-status"><span class="badge ${inv.status === 'paid' ? 'badge-compliant' : 'badge-overdue'}" style="font-size:9px;padding:2px 8px;">${inv.status.toUpperCase()}</span></span>
+          <span class="inv-dl"><button class="action-icon" onclick="showToast('Downloading invoice...','info')">⬇️</button></span>
+        </div>
+      `).join('');
+    }
+
+    // Modals
+    function openInviteModal() { document.getElementById('invite-modal').classList.add('active'); }
+    function openVendorModal() { document.getElementById('vendor-modal').classList.add('active'); }
+    function openLocationModal() { document.getElementById('location-modal').classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function sendInvite() {
+      const email = document.getElementById('invite-email').value.trim();
+      const role = document.getElementById('invite-role').value;
+      if (!email) { showToast('Email is required', 'error'); return; }
+      users.push({ name: email.split('@')[0], email, role, active: true });
+      renderUsers();
+      closeModal('invite-modal');
+      showToast(`Invitation sent to ${email} ✓`, 'success');
+    }
+
+    function addVendor() {
+      const name = document.getElementById('vendor-name').value.trim();
+      const email = document.getElementById('vendor-email').value.trim();
+      if (!name || !email) { showToast('Name and email are required', 'error'); return; }
+      DEMO_VENDORS.push({ id: DEMO_VENDORS.length + 1, name, email, phone: document.getElementById('vendor-phone').value, specialty: document.getElementById('vendor-specialty').value, active: true });
+      renderVendors();
+      closeModal('vendor-modal');
+      showToast(`Vendor "${name}" added ✓`, 'success');
+    }
+
+    function addLocation() {
+      const name = document.getElementById('loc-name').value.trim();
+      if (!name) { showToast('Location name is required', 'error'); return; }
+      DEMO_LOCATIONS.push({ id: DEMO_LOCATIONS.length + 1, name, building: document.getElementById('loc-building').value });
+      renderLocations();
+      closeModal('location-modal');
+      showToast(`Location "${name}" added ✓`, 'success');
+    }
+
+    // Initial render
+    renderUsers();
+    renderVendors();
+    renderLocations();
+    renderInvoices();
+  </script>
+</body>
+</html>
